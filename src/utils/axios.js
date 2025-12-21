@@ -28,10 +28,18 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
     (response) => {
+
+        // 对于下载请求，返回完整响应对象以获取headers
+        if (response.config.url.includes('/upload/download')) {
+            return response // 返回完整响应对象
+        }
+
         // 处理分片上传的特殊响应
         if (response.config.url.includes('/upload')) {
             return response.data // 直接返回data，因为你的后端返回ApiResult包装
         }
+
+
         return response.data
     },
     (error) => {

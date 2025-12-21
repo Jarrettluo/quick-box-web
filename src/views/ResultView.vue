@@ -152,7 +152,6 @@ const downloadFile = async () => {
     }, 1000)
 
   } catch (err) {
-    console.error('下载文件失败:', err)
     error.value = '下载文件失败：' + (err.response?.data?.message || err.message || '未知错误')
   } finally {
     downloading.value = false

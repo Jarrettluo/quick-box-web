@@ -3,6 +3,7 @@ import request from '../utils/axios'
 // 分片上传相关常量
 export const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB
 export const MAX_RETRIES = 3 // 分片上传重试次数
+export const CONCURRENT_UPLOADS = 3 // 并发上传数
 
 // 基础文件API
 export const fileApi = {
@@ -60,13 +61,21 @@ export const fileApi = {
             responseType: 'blob'
         }).then(response => {
             // 从Content-Disposition提取文件名
-            const disposition = response.headers['content-disposition']
+            const disposition = response.headers['content-disposition'] ||
+                response.headers['Content-Disposition']
             let filename = `file_${accessCode}`
 
             if (disposition) {
-                const match = disposition.match(/filename="(.+)"/)
-                if (match) {
-                    filename = match[1]
+                // 优先解析 filename* (RFC 5987)
+                const utf8FilenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+                if (utf8FilenameMatch) {
+                    filename = decodeURIComponent(utf8FilenameMatch[1])
+                } else {
+                    // 回退到 filename 参数
+                    const filenameMatch = disposition.match(/filename="([^"]+)"/i)
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/\+/g, ' '))
+                    }
                 }
             }
 
@@ -218,7 +227,6 @@ export class FileUploadService {
                     const percent = Math.round(
                         (progressEvent.loaded * 100) / progressEvent.total
                     )
-                    console.log(`分片 ${chunk.index} 上传进度: ${percent}%`)
                 }
             )
         } catch (error) {
