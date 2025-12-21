@@ -73,6 +73,7 @@
           </div>
           <p class="expiry-info">有效期至: {{ fileStore.fileInfo.expires }}</p>
           <button class="btn btn-block copy-btn" @click="copyCode">复制取件码</button>
+          <button class="btn btn-block copy-btn" @click="copyLink">复制下载链接</button>
           <button class="btn btn-block" @click="resetUpload">上传新文件</button>
         </div>
 
@@ -110,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {computed, ref} from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '../stores/fileStore'
 import FileCard from '../components/FileCard.vue'
@@ -131,6 +132,13 @@ const uploadError = ref('')
 
 const fileStore = useFileStore()
 const router = useRouter()
+
+// 计算下载链接
+const downloadLink = computed(() => {
+  if (!fileStore.pickupCode) return ''
+  const baseUrl = window.location.origin
+  return `${baseUrl}/result/${fileStore.pickupCode}`
+})
 
 // 创建文件上传服务实例
 const uploadService = new FileUploadService({
@@ -208,6 +216,13 @@ const copyCode = () => {
   if (fileStore.pickupCode) {
     navigator.clipboard.writeText(fileStore.pickupCode)
     message.success('取件码已复制到剪贴板')
+  }
+}
+
+const copyLink = () => {
+  if (downloadLink.value) {
+    navigator.clipboard.writeText(downloadLink.value)
+    message.success('下载链接已复制到剪贴板')
   }
 }
 
