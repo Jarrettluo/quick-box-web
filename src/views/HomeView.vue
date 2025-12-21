@@ -33,13 +33,33 @@
                 ref="fileInput"
                 @change="handleFileChange"
                 required
+                :disabled="isUploading"
             >
-            <progress v-if="!isUploaded && fileStore.uploadProgress > 0" :value="fileStore.uploadProgress" max="100"></progress>
+            <div v-if="selectedFile" class="file-info">
+              <p>文件名: {{ selectedFile.name }}</p>
+              <p>文件大小: {{ formatFileSize(selectedFile.size) }}</p>
+            </div>
+            <div v-if="isUploading" class="upload-progress">
+              <progress :value="uploadProgress" max="100"></progress>
+              <span class="progress-text">{{ uploadProgress }}%</span>
+              <div v-if="currentChunk > 0" class="chunk-info">
+                分片 {{ currentChunk }}/{{ totalChunks }}
+              </div>
+            </div>
+            <div v-if="uploadError" class="error-message">
+              {{ uploadError }}
+            </div>
           </div>
           <div class="notice">
             <strong>使用说明：</strong> 上传文件后系统会生成6位取件码，接收方通过取件码下载文件，文件下载后自动删除或7天后过期。
           </div>
-          <button type="submit" class="btn btn-block">生成取件码</button>
+          <button
+              type="submit"
+              class="btn btn-block"
+              :disabled="!selectedFile || isUploading"
+          >
+            {{ isUploading ? '上传中...' : '生成取件码' }}
+          </button>
         </form>
 
         <div v-if="isUploaded && fileStore.fileInfo && fileStore.pickupCode" class="result-container">
@@ -57,6 +77,8 @@
         </div>
 
         <FileCard v-if="isUploaded && fileStore.fileInfo" :file="fileStore.fileInfo" />
+
+        <HistoryView></HistoryView>
       </div>
 
       <!-- 提取文件区域 -->
@@ -70,6 +92,7 @@
                 v-model="downloadCode"
                 placeholder="例如: 3A7B9C"
                 required
+                maxlength="6"
             >
           </div>
           <div class="notice">
@@ -91,15 +114,30 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '../stores/fileStore'
 import FileCard from '../components/FileCard.vue'
+import { FileUploadService } from '../api/fileService'
+import HistoryView from "@/views/HistoryView.vue";
+import message from "@/utils/message.js";
 
 const activeTab = ref('upload')
 const fileInput = ref(null)
 const selectedFile = ref(null)
 const downloadCode = ref('')
-const isUploaded = ref(false) // Add this new ref
+const isUploaded = ref(false)
+const isUploading = ref(false)
+const uploadProgress = ref(0)
+const currentChunk = ref(0)
+const totalChunks = ref(0)
+const uploadError = ref('')
 
 const fileStore = useFileStore()
 const router = useRouter()
+
+// 创建文件上传服务实例
+const uploadService = new FileUploadService({
+  chunkSize: 5 * 1024 * 1024, // 5MB
+  concurrentUploads: 3,
+  maxRetries: 3
+})
 
 const switchTab = (tab) => {
   console.log('Switching to tab:', tab)
@@ -108,59 +146,145 @@ const switchTab = (tab) => {
 
 const handleFileChange = (event) => {
   selectedFile.value = event.target.files[0]
+  uploadError.value = ''
+  console.log('Selected file:', selectedFile.value)
+}
 
-  console.log('Selected file:', selectedFile.value) // Debug log
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 const handleUpload = async () => {
   if (!selectedFile.value) return
 
-  fileStore.uploadProgress = 10
-  await new Promise(resolve => setTimeout(resolve, 500))
-  fileStore.uploadProgress = 70
-  await new Promise(resolve => setTimeout(resolve, 800))
-  fileStore.uploadProgress = 100
-  fileStore.uploadProgress = 0 // Reset progress after completion
+  isUploading.value = true
+  uploadError.value = ''
+  uploadProgress.value = 0
+  currentChunk.value = 0
 
+  try {
+    // 使用分片上传服务
+    const fileCode = await uploadService.uploadFile(selectedFile.value, {
+      onProgress: (percent) => {
+        uploadProgress.value = percent
+      },
+      onChunkUploaded: (chunkIndex) => {
+        currentChunk.value = chunkIndex
+      },
+      onError: (error) => {
+        uploadError.value = error.message || '上传失败'
+      }
+    })
 
-  fileStore.pickupCode = fileStore.generateCode()
-  fileStore.fileInfo = {
-    name: selectedFile.value.name,
-    size: (selectedFile.value.size / 1024 / 1024).toFixed(2) + ' MB',
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
+    // 上传成功，设置取件码和文件信息
+    fileStore.pickupCode = fileCode
+    fileStore.fileInfo = {
+      name: selectedFile.value.name,
+      size: formatFileSize(selectedFile.value.size),
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
+    }
+
+    // 保存到历史记录
+    await fileStore.setUploadResult(fileCode, {
+      name: selectedFile.value.name,
+      size: selectedFile.value.size
+    })
+
+    isUploaded.value = true
+
+  } catch (error) {
+    console.error('Upload failed:', error)
+    uploadError.value = error.message || '上传失败，请重试'
+  } finally {
+    isUploading.value = false
   }
-
-
-  isUploaded.value = true // Set to true after successful upload
-
-  // await router.push(`/result/${fileStore.pickupCode}`)
 }
 
 const copyCode = () => {
   if (fileStore.pickupCode) {
     navigator.clipboard.writeText(fileStore.pickupCode)
-    alert('取件码已复制到剪贴板')
+    message.success('取件码已复制到剪贴板')
   }
 }
 
-// Add this new method to reset the upload state
 const resetUpload = () => {
   isUploaded.value = false
+  isUploading.value = false
   selectedFile.value = null
-  fileInput.value.value = ''
-  fileStore.uploadProgress = 0
-  fileStore.fileInfo = null    // Clear file info
-  fileStore.pickupCode = ''   // Clear code
-  fileStore.reset() // Assuming you have a reset method in your store
+  uploadProgress.value = 0
+  currentChunk.value = 0
+  totalChunks.value = 0
+  uploadError.value = ''
+
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+
+  fileStore.reset()
 }
 
 const handleDownload = () => {
   if (!downloadCode.value) return
-  router.push(`/result/${downloadCode.value}`)
+  router.push({path: `/result/${downloadCode.value}`,
+    query: { isUploader: true }
+  })
 }
 </script>
 
 <style scoped>
+/* 保持原有样式不变，只添加新样式 */
+
+.file-info {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+.file-info p {
+  margin: 5px 0;
+}
+
+.upload-progress {
+  margin-top: 15px;
+}
+
+.progress-text {
+  display: block;
+  text-align: center;
+  margin-top: 5px;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.chunk-info {
+  text-align: center;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.error-message {
+  margin-top: 10px;
+  padding: 10px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 5px;
+  color: #c00;
+  font-size: 0.9rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 保持原有样式不变 */
 :root {
   --primary: #4a6bdf;
   --secondary: #f8f9fa;
@@ -182,8 +306,8 @@ body {
 .container {
   max-width: 800px;
   margin: 0 auto;
-    padding: 20px;
-  }
+  padding: 20px;
+}
 header {
   text-align: center;
   margin: 40px 0;
@@ -338,5 +462,4 @@ progress::-webkit-progress-value {
 .copy-btn:hover {
   background: #218838;
 }
-
 </style>
