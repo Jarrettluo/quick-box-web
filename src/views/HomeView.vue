@@ -431,6 +431,15 @@ progress::-webkit-progress-value {
   .card {
     padding: 20px;
   }
+  /* 新增：减少手机端的左右间距 */
+  .container {
+    padding: 10px; /* 从 20px 减少到 10px */
+    margin: 0 -15px;
+  }
+
+  .card {
+    padding: 10px; /* 从 30px 减少到 15px */
+  }
 }
 
 .result-container {

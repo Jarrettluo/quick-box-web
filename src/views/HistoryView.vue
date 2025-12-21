@@ -313,5 +313,8 @@ onMounted(() => {
   .actions {
     align-self: flex-end;
   }
+  .history-container {
+    padding: 10px;
+  }
 }
 </style>
