@@ -1,0 +1,125 @@
+/* 取件码输入容器 */
+.code-input-container {
+    margin-bottom: 20px;
+}
+
+/* 增强的取件码输入框 */
+.code-input-enhanced {
+    width: 100%;
+    padding: 18px 20px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    font-family: 'Courier New', monospace;
+    background: var(--light);
+    color: var(--gray-dark);
+    margin-bottom: 8px;
+}
+
+.code-input-enhanced:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74, 107, 223, 0.2);
+    transform: translateY(-1px);
+}
+
+.code-input-enhanced.has-value {
+    border-color: var(--primary-light);
+    background: rgba(74, 107, 223, 0.05);
+    color: var(--primary);
+}
+
+.code-input-enhanced::placeholder {
+    color: var(--gray);
+    font-weight: normal;
+    letter-spacing: normal;
+    text-transform: none;
+    font-size: 1.1rem;
+}
+
+/* 输入提示 */
+.code-input-hint {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--gray);
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.code-length-indicator {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* 下载通知区域 */
+.download-notice {
+    background: #fff8e1;
+    border-left: 4px solid var(--warning);
+    padding: 20px;
+    margin: 25px 0;
+}
+
+.notice-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.notice-header svg {
+    color: var(--warning);
+}
+
+.notice-header strong {
+    color: var(--warning);
+    font-size: 1rem;
+}
+
+.notice-content {
+    font-size: 0.9rem;
+    color: var(--gray-dark);
+    line-height: 1.6;
+}
+
+.notice-content p {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.notice-content p:before {
+    content: "•";
+    color: var(--warning);
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+/* 下载按钮 */
+.download-btn {
+    background: var(--success);
+    padding: 16px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.download-btn:hover:not(.disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.download-btn.disabled {
+    background: var(--gray);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.download-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}

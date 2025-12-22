@@ -54,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore'
 import message from '@/utils/message.js'
+import {copyPickupCode} from "@/utils/clipboard.js";
 
 const router = useRouter()
 const fileStore = useFileStore()
@@ -96,7 +97,7 @@ const isExpiring = (expiresAt) => {
 }
 
 // 复制取件码
-const copyCode = async (code) => {
+const copyCode1 = async (code) => {
   try {
     await navigator.clipboard.writeText(code)
     copiedCode.value = code
@@ -111,6 +112,28 @@ const copyCode = async (code) => {
     message.error('复制失败，请手动复制')
   }
 }
+
+const copyCode = async (code) => {
+  if (code) {
+    const success = await copyPickupCode(
+        code,
+        (code) => {
+          message.success(`取件码 ${code} 已复制到剪贴板`)
+        },
+        () => {
+          message.error('复制取件码失败，请手动复制')
+        }
+    )
+
+    if (!success) {
+      // 如果复制失败，显示取件码让用户手动复制
+      message.info(`取件码：${code}`)
+    }
+  } else {
+    message.error("没有可复制的取件码")
+  }
+}
+
 
 // 删除记录
 const deleteRecord = async (code) => {

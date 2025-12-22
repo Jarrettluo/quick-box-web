@@ -4,6 +4,8 @@ import App from './App.vue'
 import router from './router'
 import { initStorage } from './utils/storage'
 
+import './assets/css/global.css' // 添加这行
+
 const app = createApp(App)
 const pinia = createPinia()
 
