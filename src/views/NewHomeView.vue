@@ -9,6 +9,13 @@
       <div class="tab-container">
         <button
             class="tab"
+            :class="{ active: activeTab === 'folder-upload' }"
+            @click="switchTab('folder-upload')"
+        >
+          上传文件夹
+        </button>
+        <button
+            class="tab"
             :class="{ active: activeTab === 'upload' }"
             @click="switchTab('upload')"
         >
@@ -22,6 +29,197 @@
           提取文件
         </button>
       </div>
+      <!-- 上传文件夹区域 -->
+      <div v-if="activeTab === 'folder-upload'" class="tab-content">
+        <form v-if="!folderUploaded" @submit.prevent="handleFolderUpload">
+          <div class="form-group">
+            <label for="folder">选择文件夹（7天后自动删除）</label>
+
+            <!-- 文件夹选择区域 -->
+            <div class="file-input-container">
+              <input
+                  type="file"
+                  id="folder"
+                  ref="folderInput"
+                  @change="handleFolderChange"
+                  required
+                  :disabled="folderUploading"
+                  class="file-input"
+                  webkitdirectory
+                  directory
+                  multiple
+              >
+              <label for="folder" class="file-input-label" :class="{ 'disabled': folderUploading }">
+                <div class="file-input-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </div>
+                <div class="file-input-text">
+                  <span v-if="!selectedFolder || selectedFolder.length === 0">点击选择文件夹或拖拽到此处</span>
+                  <span v-else class="file-selected">{{ selectedFolderName }}</span>
+                  <p class="file-input-hint">支持选择整个文件夹，保持目录结构</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- 文件夹信息卡片 -->
+            <div v-if="selectedFolder && selectedFolder.length > 0" class="file-info-card">
+              <div class="file-info-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="file-icon">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <div class="file-info-main">
+                  <h4 class="file-name">{{ selectedFolderName }}</h4>
+                  <p class="file-size">{{ folderFileCount }} 个文件，总计 {{ formatFileSize(folderTotalSize) }}</p>
+                </div>
+                <button v-if="!folderUploading" type="button" class="file-remove-btn" @click="removeFolder" title="移除文件夹">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 上传进度区域 -->
+            <div v-if="folderUploading" class="upload-progress-container">
+              <div class="progress-header">
+                <span class="progress-title">上传进度</span>
+                <span class="progress-percent">{{ folderUploadProgress }}%</span>
+              </div>
+
+              <!-- 自定义进度条 -->
+              <div class="custom-progress-bar">
+                <div
+                    class="custom-progress-fill"
+                    :style="{ width: folderUploadProgress + '%' }"
+                ></div>
+              </div>
+
+              <!-- 文件进度信息 -->
+              <div v-if="folderCurrentFile > 0" class="chunk-info-container">
+                <div class="chunk-stats">
+                  <span class="chunk-label">文件进度</span>
+                  <span class="chunk-value">{{ folderCurrentFile }}/{{ folderTotalFiles }}</span>
+                </div>
+                <div class="chunk-progress-bar">
+                  <div
+                      class="chunk-progress-fill"
+                      :style="{ width: (folderCurrentFile / folderTotalFiles * 100) + '%' }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 上传状态 -->
+              <div class="upload-status">
+                <div class="status-dot" :class="{ 'active': folderUploading }"></div>
+                <span class="status-text">
+                  {{ folderUploading ? '正在上传...' : '准备上传' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- 错误信息 -->
+            <div v-if="folderUploadError" class="error-message-card">
+              <div class="error-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>上传失败</span>
+              </div>
+              <p class="error-details">{{ folderUploadError }}</p>
+            </div>
+          </div>
+
+          <div class="notice">
+            <strong>使用说明：</strong> 上传文件夹后系统会生成6位取件码，接收方通过取件码下载文件夹（ZIP压缩包），文件夹下载后自动删除或7天后过期。
+          </div>
+
+          <button
+              type="submit"
+              class="btn btn-block upload-btn"
+              :disabled="!selectedFolder || selectedFolder.length === 0 || folderUploading"
+              :class="{ 'uploading': folderUploading }"
+          >
+            <span v-if="folderUploading" class="btn-loading">
+              <span class="loading-spinner"></span>
+              上传中...
+            </span>
+            <span v-else>
+              生成取件码
+            </span>
+          </button>
+        </form>
+
+        <!-- 上传结果区域 -->
+        <div v-if="folderUploaded && fileStore.fileInfo && fileStore.pickupCode" class="result-container">
+          <div class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h3>取件码已生成</h3>
+          <p class="success-message">文件夹上传成功！请保存以下取件码</p>
+          <div
+              class="code-display"
+              @click="copyCode"
+              title="点击复制"
+          >
+            {{ fileStore.pickupCode }}
+          </div>
+          <p class="expiry-info">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 style="vertical-align: middle; margin-right: 6px;">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            有效期至: {{ fileStore.fileInfo.expires }}
+          </p>
+          <div class="action-buttons">
+            <button class="btn btn-action copy-btn" @click="copyCode">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   style="margin-right: 8px;">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              复制取件码
+            </button>
+            <button class="btn btn-action share-btn" @click="copyLink">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   style="margin-right: 8px;">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+              </svg>
+              分享下载链接
+            </button>
+          </div>
+          <button class="btn btn-block new-upload-btn" @click="resetFolderUpload">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 style="margin-right: 8px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            上传新文件夹
+          </button>
+        </div>
+      </div>
+
       <!-- 上传文件区域 -->
       <div v-if="activeTab === 'upload'" class="tab-content">
         <form v-if="!isUploaded" @submit.prevent="handleUpload">
@@ -338,6 +536,7 @@ import {useRouter} from 'vue-router'
 import {useFileStore} from '../stores/fileStore'
 import FileCard from '../components/FileCard.vue'
 import {FileUploadService} from '@/api/index.js'
+import {FolderUploadService} from '@/api/fileService.js'
 import HistoryView from "@/views/HistoryView.vue";
 import message from "@/utils/message.js";
 
@@ -349,13 +548,22 @@ import {copyDownloadLink, copyPickupCode} from "@/utils/clipboard.js";
 const activeTab = ref('upload')
 const fileInput = ref(null)
 const selectedFile = ref(null)
+const folderInput = ref(null)
+const selectedFolder = ref(null)
 const downloadCode = ref('')
 const isUploaded = ref(false)
 const isUploading = ref(false)
+const folderUploaded = ref(false)
+const folderUploading = ref(false)
 const uploadProgress = ref(0)
+const folderUploadProgress = ref(0)
 const currentChunk = ref(0)
 const totalChunks = ref(0)
+const folderCurrentFile = ref(0)
+const folderTotalFiles = ref(0)
+const folderCurrentChunk = ref(0)
 const uploadError = ref('')
+const folderUploadError = ref('')
 
 const fileStore = useFileStore()
 const router = useRouter()
@@ -369,8 +577,38 @@ const downloadLink = computed(() => {
   return `${baseUrl}/result/${fileStore.pickupCode}`
 })
 
+// 文件夹相关信息计算属性
+const selectedFolderName = computed(() => {
+  if (!selectedFolder.value || selectedFolder.value.length === 0) return ''
+  // 尝试从第一个文件中获取文件夹路径
+  const firstFile = selectedFolder.value[0]
+  if (firstFile.webkitRelativePath) {
+    const parts = firstFile.webkitRelativePath.split('/')
+    if (parts.length > 1) {
+      return parts[0] // 返回顶层文件夹名
+    }
+  }
+  return '文件夹'
+})
+
+const folderFileCount = computed(() => {
+  return selectedFolder.value ? selectedFolder.value.length : 0
+})
+
+const folderTotalSize = computed(() => {
+  if (!selectedFolder.value) return 0
+  return Array.from(selectedFolder.value).reduce((total, file) => total + file.size, 0)
+})
+
 // 创建文件上传服务实例
 const uploadService = new FileUploadService({
+  chunkSize: 5 * 1024 * 1024, // 5MB
+  concurrentUploads: 3,
+  maxRetries: 3
+})
+
+// 创建文件夹上传服务实例
+const folderUploadService = new FolderUploadService({
   chunkSize: 5 * 1024 * 1024, // 5MB
   concurrentUploads: 3,
   maxRetries: 3
@@ -387,10 +625,23 @@ const handleFileChange = (event) => {
   console.log('Selected file:', selectedFile.value)
 }
 
+const handleFolderChange = (event) => {
+  selectedFolder.value = event.target.files
+  folderUploadError.value = ''
+  console.log('Selected folder:', selectedFolder.value, 'file count:', selectedFolder.value.length)
+}
+
 const removeFile = () => {
   selectedFile.value = null
   if (fileInput.value) {
     fileInput.value.value = ''
+  }
+}
+
+const removeFolder = () => {
+  selectedFolder.value = null
+  if (folderInput.value) {
+    folderInput.value.value = ''
   }
 }
 
@@ -445,6 +696,61 @@ const handleUpload = async () => {
     uploadError.value = error.message || '上传失败，请重试'
   } finally {
     isUploading.value = false
+  }
+}
+
+const handleFolderUpload = async () => {
+  if (!selectedFolder.value || selectedFolder.value.length === 0) return
+
+  folderUploading.value = true
+  folderUploadError.value = ''
+  folderUploadProgress.value = 0
+  folderCurrentFile.value = 0
+  folderTotalFiles.value = selectedFolder.value.length
+  folderCurrentChunk.value = 0
+
+  try {
+    // 使用文件夹上传服务
+    const folderName = selectedFolderName.value || 'untitled_folder'
+    const result = await folderUploadService.uploadFolder(selectedFolder.value, folderName, {
+      onProgress: (progressInfo) => {
+        folderUploadProgress.value = progressInfo.overallProgress
+        folderCurrentFile.value = progressInfo.uploadedFiles
+        folderTotalFiles.value = progressInfo.totalFiles
+      },
+      onFileProgress: (fileProgress) => {
+        // 可以用于显示当前文件的上传进度，但这里我们主要使用整体进度
+        console.log('File progress:', fileProgress)
+      },
+      onError: (error) => {
+        folderUploadError.value = error.message || '上传失败'
+      },
+      keepStructure: true,
+      autoZip: true,
+      metadata: {}
+    })
+
+    // 上传成功，设置取件码和文件信息
+    fileStore.pickupCode = result.accessCode || result.fileCode
+    fileStore.fileInfo = {
+      name: folderName,
+      size: formatFileSize(folderTotalSize.value),
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
+    }
+
+    // 保存到历史记录（可能需要适配文件夹）
+    await fileStore.setUploadResult(fileStore.pickupCode, {
+      name: folderName,
+      size: folderTotalSize.value
+    })
+
+    folderUploaded.value = true
+
+  } catch (error) {
+    console.error('Folder upload failed:', error)
+    folderUploadError.value = error.message || '文件夹上传失败，请重试'
+  } finally {
+    folderUploading.value = false
   }
 }
 
@@ -507,7 +813,24 @@ const resetUpload = () => {
     fileInput.value.value = ''
   }
 
-  fileStore.reset()
+  fileStore.clearUploadResult()
+}
+
+const resetFolderUpload = () => {
+  folderUploaded.value = false
+  folderUploading.value = false
+  selectedFolder.value = null
+  folderUploadProgress.value = 0
+  folderCurrentFile.value = 0
+  folderTotalFiles.value = 0
+  folderCurrentChunk.value = 0
+  folderUploadError.value = ''
+
+  if (folderInput.value) {
+    folderInput.value.value = ''
+  }
+
+  fileStore.clearUploadResult()
 }
 
 const handleDownload = () => {

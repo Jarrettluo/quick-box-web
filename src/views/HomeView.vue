@@ -9,6 +9,13 @@
       <div class="tab-container">
         <button
             class="tab"
+            :class="{ active: activeTab === 'folder-upload' }"
+            @click="switchTab('folder-upload')"
+        >
+          上传文件夹
+        </button>
+        <button
+            class="tab"
             :class="{ active: activeTab === 'upload' }"
             @click="switchTab('upload')"
         >
@@ -22,6 +29,9 @@
           提取文件
         </button>
       </div>
+
+      <!-- 上传文件夹区域 -->
+      <FolderUploadTab v-if="activeTab === 'folder-upload'"/>
 
       <!-- 上传文件区域 -->
       <UploadTab v-if="activeTab === 'upload'"/>
@@ -49,6 +59,7 @@
 <script setup>
 import {ref} from 'vue'
 import UploadTab from '../components/UploadTab.vue'
+import FolderUploadTab from '../components/FolderUploadTab.vue'
 import DownloadTab from '../components/DownloadTab.vue'
 import Modal from '../components/Modal.vue'
 import ModalContent from '../components/ModalContent.vue'

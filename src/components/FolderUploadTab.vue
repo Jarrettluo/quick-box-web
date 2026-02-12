@@ -1,11 +1,11 @@
 <template>
   <div class="tab-content">
-    <FileUploader
+    <FolderUploader
         v-if="!isUploaded"
-        @file-selected="handleFileSelected"
+        @folder-selected="handleFolderSelected"
         @upload="handleUpload"
-        @remove-file="removeFile"
-        :selectedFiles="selectedFiles"
+        @remove-folder="removeFolder"
+        :selectedFolder="selectedFolder"
         :isUploading="isUploading"
         :uploadProgress="uploadProgress"
         :currentChunk="currentChunk"
@@ -29,18 +29,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useFileStore } from '../stores/fileStore.js'
-import { FileUploadService } from '@/api/index.js'
+import { FolderUploadService } from '@/api/fileService.js'
 import message from '@/utils/message.js'
 import { copyDownloadLink, copyPickupCode } from '@/utils/clipboard.js'
-import FileUploader from './FileUploader.vue'
+import FolderUploader from './FolderUploader.vue'
 import UploadResult from './UploadResult.vue'
 import FileCard from './FileCard.vue'
 import HistoryView from '@/views/HistoryView.vue'
 
 const fileStore = useFileStore()
-const selectedFiles = ref([])
+const selectedFolder = ref(null)
 const isUploaded = ref(false)
 const isUploading = ref(false)
 const uploadProgress = ref(0)
@@ -48,11 +48,34 @@ const currentChunk = ref(0)
 const totalChunks = ref(0)
 const uploadError = ref('')
 
-// 创建文件上传服务实例
-const uploadService = new FileUploadService({
+// 创建文件夹上传服务实例
+const folderUploadService = new FolderUploadService({
   chunkSize: 5 * 1024 * 1024, // 5MB
   concurrentUploads: 3,
   maxRetries: 3
+})
+
+// 计算属性
+const selectedFolderName = computed(() => {
+  if (!selectedFolder.value || selectedFolder.value.length === 0) return ''
+  // 尝试从第一个文件中获取文件夹路径
+  const firstFile = selectedFolder.value[0]
+  if (firstFile.webkitRelativePath) {
+    const parts = firstFile.webkitRelativePath.split('/')
+    if (parts.length > 1) {
+      return parts[0] // 返回顶层文件夹名
+    }
+  }
+  return '文件夹'
+})
+
+const folderFileCount = computed(() => {
+  return selectedFolder.value ? selectedFolder.value.length : 0
+})
+
+const folderTotalSize = computed(() => {
+  if (!selectedFolder.value) return 0
+  return Array.from(selectedFolder.value).reduce((total, file) => total + file.size, 0)
 })
 
 const formatFileSize = (bytes) => {
@@ -63,85 +86,67 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-const handleFileSelected = (files) => {
-  selectedFiles.value = files
+const handleFolderSelected = (files) => {
+  selectedFolder.value = files
   uploadError.value = ''
+  console.log('Selected folder:', files, 'file count:', files.length)
 }
 
-const removeFile = () => {
-  selectedFiles.value = []
+const removeFolder = () => {
+  selectedFolder.value = null
 }
 
 const handleUpload = async () => {
-  if (!selectedFiles.value || selectedFiles.value.length === 0) return
+  if (!selectedFolder.value || selectedFolder.value.length === 0) return
 
   isUploading.value = true
   uploadError.value = ''
   uploadProgress.value = 0
   currentChunk.value = 0
-  totalChunks.value = selectedFiles.value.length
+  totalChunks.value = 0
 
   try {
-    const totalFiles = selectedFiles.value.length
-    let uploadedFiles = 0
-    let lastFileCode = null
-    let lastFileInfo = null
+    // 使用文件夹上传服务
+    const folderName = selectedFolderName.value || 'untitled_folder'
+    const result = await folderUploadService.uploadFolder(selectedFolder.value, folderName, {
+      onProgress: (progressInfo) => {
+        uploadProgress.value = progressInfo.overallProgress
+        // 这里可以根据需要设置 currentChunk 和 totalChunks，但文件夹上传没有分片概念
+        // 我们可以用文件进度代替
+        currentChunk.value = progressInfo.uploadedFiles
+        totalChunks.value = progressInfo.totalFiles
+      },
+      onFileProgress: (fileProgress) => {
+        // 可以用于显示当前文件的上传进度
+        console.log('File progress:', fileProgress)
+      },
+      onError: (error) => {
+        uploadError.value = error.message || '上传失败'
+      },
+      keepStructure: true,
+      autoZip: true,
+      metadata: {}
+    })
 
-    for (const file of selectedFiles.value) {
-      try {
-        // 使用分片上传服务上传单个文件
-        const fileCode = await uploadService.uploadFile(file, {
-          onProgress: (percent) => {
-            // 计算总体进度：已上传文件的进度 + 当前文件进度
-            const overallProgress = Math.round((uploadedFiles * 100 + percent) / totalFiles)
-            uploadProgress.value = overallProgress
-          },
-          onChunkUploaded: (chunkIndex) => {
-            currentChunk.value = chunkIndex
-          },
-          onError: (error) => {
-            uploadError.value = error.message || '上传失败'
-          }
-        })
-
-        uploadedFiles++
-        currentChunk.value = uploadedFiles
-        lastFileCode = fileCode
-        lastFileInfo = {
-          name: file.name,
-          size: file.size,
-          fileCode
-        }
-
-        // 保存到历史记录（每个文件单独保存）
-        await fileStore.setUploadResult(fileCode, {
-          name: file.name,
-          size: file.size
-        })
-
-      } catch (error) {
-        console.error('Upload failed for file:', file.name, error)
-        uploadError.value = `文件 "${file.name}" 上传失败: ${error.message || '请重试'}`
-        // 继续上传其他文件
-        continue
-      }
+    // 上传成功，设置取件码和文件信息
+    fileStore.pickupCode = result.accessCode || result.fileCode
+    fileStore.fileInfo = {
+      name: folderName,
+      size: formatFileSize(folderTotalSize.value),
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
     }
 
-    if (lastFileCode) {
-      // 设置最后一个成功上传文件的取件码和信息
-      fileStore.pickupCode = lastFileCode
-      fileStore.fileInfo = {
-        name: selectedFiles.value.length > 1 ? `${selectedFiles.value.length} 个文件` : lastFileInfo.name,
-        size: formatFileSize(selectedFiles.value.reduce((total, file) => total + file.size, 0)),
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString()
-      }
-    }
+    // 保存到历史记录
+    await fileStore.setUploadResult(fileStore.pickupCode, {
+      name: folderName,
+      size: folderTotalSize.value
+    })
 
     isUploaded.value = true
 
   } catch (error) {
-    console.error('Upload failed:', error)
-    uploadError.value = error.message || '上传失败，请重试'
+    console.error('Folder upload failed:', error)
+    uploadError.value = error.message || '文件夹上传失败，请重试'
   } finally {
     isUploading.value = false
   }
@@ -193,11 +198,12 @@ const copyLink = async () => {
 const resetUpload = () => {
   isUploaded.value = false
   isUploading.value = false
-  selectedFiles.value = []
+  selectedFolder.value = null
   uploadProgress.value = 0
   currentChunk.value = 0
   totalChunks.value = 0
   uploadError.value = ''
+
   fileStore.clearUploadResult()
 }
 </script>
