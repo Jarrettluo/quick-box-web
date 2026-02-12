@@ -94,8 +94,185 @@ export const fileApi = {
     // 取消上传（如果需要）
     cancelUpload(uploadId) {
         return request.delete(`/api/upload/${uploadId}`)
-    }
+    },
 
+    // ==================== 文件夹上传API ====================
+    // 初始化文件夹上传
+    initFolderUpload(data) {
+        return request.post('/api/upload/folder/init', data)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 上传文件夹分片
+    uploadFolderChunk(sessionId, chunkNumber, file, params = {}) {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // 添加所有必需参数
+        formData.append('sessionId', sessionId)
+        formData.append('chunkNumber', chunkNumber)
+        formData.append('totalChunks', params.totalChunks || 1)
+        formData.append('chunkSize', params.chunkSize || file.size)
+        formData.append('currentChunkSize', file.size)
+        formData.append('totalSize', params.totalSize || file.size)
+        formData.append('identifier', params.identifier || file.name)
+        formData.append('filename', params.filename || file.name)
+
+        // 可选参数
+        if (params.relativePath !== undefined) formData.append('relativePath', params.relativePath)
+        if (params.isZipUpload !== undefined) formData.append('isZipUpload', params.isZipUpload)
+        if (params.zipFileIndex !== undefined) formData.append('zipFileIndex', params.zipFileIndex)
+        if (params.zipTotalChunks !== undefined) formData.append('zipTotalChunks', params.zipTotalChunks)
+        if (params.metadata !== undefined) formData.append('metadata', params.metadata)
+
+        return request.post('/api/upload/folder/chunk', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 0
+        })
+    },
+
+    // 合并文件夹分片
+    mergeFolderChunks(sessionId) {
+        return request.post('/api/upload/folder/merge', null, {
+            params: { sessionId }
+        }).then(response => {
+            return response.data
+        })
+    },
+
+    // 获取文件夹信息
+    getFolderInfo(accessCode) {
+        return request.get(`/api/upload/folder/info/${accessCode}`)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 下载文件夹（ZIP压缩包）
+    downloadFolder(accessCode) {
+        return request.get(`/api/upload/folder/download/${accessCode}`, {
+            responseType: 'blob'
+        }).then(response => {
+            const disposition = response.headers['content-disposition'] ||
+                response.headers['Content-Disposition']
+            let filename = `folder_${accessCode}.zip`
+
+            if (disposition) {
+                const utf8FilenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+                if (utf8FilenameMatch) {
+                    filename = decodeURIComponent(utf8FilenameMatch[1])
+                } else {
+                    const filenameMatch = disposition.match(/filename="([^"]+)"/i)
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/\+/g, ' '))
+                    }
+                }
+            }
+
+            return {
+                blob: response.data,
+                filename: filename
+            }
+        })
+    },
+
+    // 下载文件夹中的单个文件
+    downloadFolderFile(accessCode, filePath) {
+        return request.get(`/api/upload/folder/file/${accessCode}`, {
+            params: { path: filePath },
+            responseType: 'blob'
+        }).then(response => {
+            const disposition = response.headers['content-disposition'] ||
+                response.headers['Content-Disposition']
+            let filename = filePath.split('/').pop() || `file_${accessCode}`
+
+            if (disposition) {
+                const utf8FilenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+                if (utf8FilenameMatch) {
+                    filename = decodeURIComponent(utf8FilenameMatch[1])
+                } else {
+                    const filenameMatch = disposition.match(/filename="([^"]+)"/i)
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].replace(/\+/g, ' '))
+                    }
+                }
+            }
+
+            return {
+                blob: response.data,
+                filename: filename
+            }
+        })
+    },
+
+    // 取消文件夹上传
+    cancelFolderUpload(sessionId) {
+        return request.post('/api/upload/folder/cancel', null, {
+            params: { sessionId }
+        }).then(response => {
+            return response.data
+        })
+    },
+
+    // 验证取件码
+    validateAccessCode(accessCode) {
+        return request.get(`/api/upload/folder/validate/${accessCode}`)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 获取文件夹统计信息
+    getFolderStats() {
+        return request.get('/api/upload/folder/stats')
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 获取上传进度
+    getUploadProgress(sessionId) {
+        return request.get(`/api/upload/folder/progress/${sessionId}`)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 删除文件夹
+    deleteFolder(accessCode) {
+        return request.delete(`/api/upload/folder/${accessCode}`)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 批量删除文件夹
+    batchDeleteFolders(accessCodes) {
+        return request.post('/api/upload/folder/batch-delete', accessCodes)
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 生成取件码
+    generateAccessCode() {
+        return request.get('/api/upload/folder/generate-code')
+            .then(response => {
+                return response.data
+            })
+    },
+
+    // 清理过期文件夹（管理员接口）
+    cleanupExpiredFolders() {
+        return request.post('/api/upload/folder/cleanup')
+            .then(response => {
+                return response.data
+            })
+    }
 
 }
 
@@ -245,5 +422,200 @@ export class FileUploadService {
     }
 }
 
+// 高级文件夹上传服务类
+export class FolderUploadService {
+    constructor(options = {}) {
+        this.chunkSize = options.chunkSize || CHUNK_SIZE
+        this.maxRetries = options.maxRetries || MAX_RETRIES
+        this.concurrentUploads = options.concurrentUploads || 3
+    }
+
+    // 上传整个文件夹（通过FileList或文件数组）
+    async uploadFolder(files, folderName, options = {}) {
+        const {
+            onProgress,
+            onFileProgress,
+            onError,
+            keepStructure = true,
+            autoZip = false,
+            metadata = {}
+        } = options
+
+        try {
+            // 1. 计算总大小和文件结构
+            const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0)
+            const totalFiles = files.length
+
+            // 2. 构建文件结构JSON
+            const structure = this.buildFileStructure(files, keepStructure)
+
+            // 3. 初始化文件夹上传
+            const initData = {
+                folderName: folderName || 'untitled_folder',
+                totalFiles,
+                totalSize,
+                structureJson: JSON.stringify(structure),
+                autoZip,
+                keepStructure,
+                metadata: JSON.stringify(metadata),
+                files: structure.files
+            }
+
+            const initResponse = await fileApi.initFolderUpload(initData)
+            const { sessionId, folderId, accessCode } = initResponse
+
+            // 4. 上传所有文件
+            let uploadedSize = 0
+            let uploadedFiles = 0
+            const results = []
+
+            for (const file of files) {
+                const relativePath = file.webkitRelativePath || file.relativePath || file.name
+                const fileSize = file.size
+                const totalChunks = Math.ceil(fileSize / this.chunkSize)
+
+                // 上传单个文件的所有分片
+                for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
+                    const start = (chunkNumber - 1) * this.chunkSize
+                    const end = Math.min(start + this.chunkSize, fileSize)
+                    const chunkBlob = file.slice(start, end)
+                    const chunkFile = new File([chunkBlob], `${file.name}.part${chunkNumber}`)
+
+                    await fileApi.uploadFolderChunk(sessionId, chunkNumber, chunkFile, {
+                        totalChunks,
+                        chunkSize: this.chunkSize,
+                        totalSize: fileSize,
+                        identifier: file.name,
+                        filename: file.name,
+                        relativePath,
+                        isZipUpload: autoZip
+                    })
+
+                    uploadedSize += (end - start)
+                    onFileProgress?.({
+                        file: file.name,
+                        relativePath,
+                        progress: Math.round((chunkNumber * 100) / totalChunks),
+                        uploadedSize: end - start,
+                        totalSize: fileSize
+                    })
+                }
+
+                uploadedFiles++
+                results.push({ file: file.name, success: true })
+
+                // 更新整体进度
+                const overallProgress = Math.round((uploadedFiles * 100) / totalFiles)
+                onProgress?.({
+                    overallProgress,
+                    uploadedFiles,
+                    totalFiles,
+                    uploadedSize,
+                    totalSize,
+                    currentFile: file.name
+                })
+            }
+
+            // 5. 合并分片
+            const finalResult = await fileApi.mergeFolderChunks(sessionId)
+            return {
+                ...finalResult,
+                sessionId,
+                folderId,
+                accessCode,
+                uploadedFiles: results.length,
+                totalFiles
+            }
+
+        } catch (error) {
+            onError?.(error)
+            throw error
+        }
+    }
+
+    // 构建文件结构
+    buildFileStructure(files, keepStructure) {
+        const fileItems = []
+        const structure = { files: fileItems, folders: {} }
+
+        for (const file of files) {
+            const relativePath = file.webkitRelativePath || file.relativePath || file.name
+            const pathParts = keepStructure ? relativePath.split('/') : [file.name]
+            const fileName = pathParts.pop()
+            const folderPath = keepStructure ? pathParts.join('/') : ''
+
+            fileItems.push({
+                fileName: fileName,
+                fileSize: file.size,
+                relativePath: keepStructure ? relativePath : fileName,
+                mimeType: file.type || 'application/octet-stream',
+                md5Hash: '', // 前端通常不计算MD5
+                chunkSize: this.chunkSize,
+                totalChunks: Math.ceil(file.size / this.chunkSize)
+            })
+
+            // 记录文件夹结构
+            if (keepStructure && folderPath) {
+                if (!structure.folders[folderPath]) {
+                    structure.folders[folderPath] = []
+                }
+                structure.folders[folderPath].push(fileName)
+            }
+        }
+
+        return structure
+    }
+
+    // 下载整个文件夹
+    async downloadFolder(accessCode, options = {}) {
+        const { onProgress, onError } = options
+
+        try {
+            const result = await fileApi.downloadFolder(accessCode)
+
+            // 创建下载链接
+            const url = window.URL.createObjectURL(result.blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = result.filename
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+
+            return result
+        } catch (error) {
+            onError?.(error)
+            throw error
+        }
+    }
+
+    // 获取文件夹信息
+    async getFolderInfo(accessCode) {
+        return await fileApi.getFolderInfo(accessCode)
+    }
+
+    // 取消文件夹上传
+    async cancelFolderUpload(sessionId) {
+        return await fileApi.cancelFolderUpload(sessionId)
+    }
+
+    // 验证取件码
+    async validateAccessCode(accessCode) {
+        return await fileApi.validateAccessCode(accessCode)
+    }
+
+    // 获取上传进度
+    async getUploadProgress(sessionId) {
+        return await fileApi.getUploadProgress(sessionId)
+    }
+
+    // 删除文件夹
+    async deleteFolder(accessCode) {
+        return await fileApi.deleteFolder(accessCode)
+    }
+}
+
 // 导出默认实例
+export const folderUploadService = new FolderUploadService()
 export default new FileUploadService()
