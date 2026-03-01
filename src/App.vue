@@ -56,9 +56,35 @@ body, html {
   font-family: 'Segoe UI', Arial, sans-serif;
 }
 
+/* 移动端优化 */
 @media (max-width: 768px) {
   #app {
-    padding: 0 10px;
+    padding: 0 8px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  #app {
+    padding: 0 6px;
+  }
+
+  /* 优化点击区域，提高可点击性 */
+  button,
+  .tab,
+  .file-input-label,
+  .file-remove-btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* 防止输入框在焦点时缩放 */
+  input[type="text"],
+  input[type="file"],
+  .code-input-enhanced {
+    font-size: 16px !important;
   }
 }
 

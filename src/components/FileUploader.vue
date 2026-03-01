@@ -413,19 +413,71 @@ label {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .file-input-label {
-    padding: 30px 15px;
-    min-height: 160px;
+    padding: 25px 12px;
+    min-height: 140px;
   }
 
   .file-input-icon svg {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .file-input-text span {
+    font-size: 1rem;
+  }
+
+  .upload-btn {
+    font-size: 1rem;
+    padding: 14px;
+  }
+
+  .notice {
+    padding: 14px;
+    margin: 18px 0;
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 480px) {
+  .file-input-label {
+    padding: 20px 10px;
+    min-height: 120px;
+  }
+
+  .file-input-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .file-input-text span {
+    font-size: 0.95rem;
+  }
+
+  .file-info-card {
+    padding: 12px;
+  }
+
+  .file-name {
+    font-size: 0.9rem;
+  }
+
+  .file-size {
+    font-size: 0.8rem;
+  }
+
+  .upload-btn {
+    font-size: 0.95rem;
+    padding: 12px;
+  }
+
+  .notice {
+    padding: 12px;
+    margin: 16px 0;
+    font-size: 0.8rem;
+  }
+
   .upload-progress-container {
-    padding: 15px;
+    padding: 12px;
   }
 }
 </style>

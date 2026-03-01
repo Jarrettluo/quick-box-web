@@ -161,41 +161,73 @@ footer {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .container {
-    padding: 15px;
+    padding: 12px;
   }
 
   .card {
-    padding: 20px;
+    padding: 18px;
   }
 
   .logo {
-    font-size: 2rem;
+    font-size: 1.8rem;
+  }
+
+  .slogan {
+    font-size: 0.9rem;
   }
 
   .tab {
-    padding: 10px 16px;
-    font-size: 0.95rem;
+    padding: 10px 18px;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 480px) {
   .container {
-    padding: 10px;
-    margin: 0 -15px;
+    padding: 8px;
+    margin: 0 -8px;
   }
 
   .card {
-    padding: 15px;
+    padding: 14px;
+  }
+
+  header {
+    margin: 16px 0 20px;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+  }
+
+  .slogan {
+    font-size: 0.85rem;
   }
 
   .tab-container {
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+    border-bottom: none;
   }
 
   .tab {
     width: 100%;
     text-align: center;
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    background: var(--gray-light);
+  }
+
+  .tab.active {
+    border-color: var(--primary);
+    background: rgba(74, 107, 223, 0.1);
+  }
+
+  footer {
+    margin-top: 30px;
+    padding: 15px 0;
+    font-size: 0.8rem;
   }
 }
 </style>

@@ -15,4 +15,22 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  build: {
+    // 优化构建配置，适合移动端
+    sourcemap: false,
+    chunkSizeWarningLimit: 500,
+    // 代码分割优化
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['vue', 'vue-router', 'pinia'],
+          utils: ['axios']
+        }
+      }
+    }
+  },
+  server: {
+    port: 3000,
+    open: true
+  }
 })
