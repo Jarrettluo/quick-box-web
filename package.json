@@ -7,8 +7,8 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development --host",
+    "build": "vite build --mode production",
     "preview": "vite preview"
   },
   "dependencies": {
