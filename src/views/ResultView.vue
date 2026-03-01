@@ -284,12 +284,108 @@ header {
   background: #218838;
 }
 
-@media (max-width: 600px) {
-  .logo {
-    font-size: 2rem;
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
   }
+
   .card {
     padding: 20px;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+  }
+
+  .slogan {
+    font-size: 0.9rem;
+  }
+
+  .loading {
+    padding: 30px;
+    font-size: 1rem;
+  }
+
+  .error-container {
+    padding: 15px;
+  }
+
+  .error-container h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+
+  .error-message {
+    padding: 12px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+  }
+
+  .btn {
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+
+  .notice {
+    padding: 12px;
+    margin-top: 15px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  header {
+    margin: 20px 0;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+  }
+
+  .slogan {
+    font-size: 0.85rem;
+  }
+
+  .loading {
+    padding: 25px;
+    font-size: 0.95rem;
+  }
+
+  .error-container {
+    padding: 12px;
+  }
+
+  .error-container h2 {
+    font-size: 1.1rem;
+  }
+
+  .error-message {
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 12px 18px;
+    font-size: 0.95rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+  }
+
+  .notice {
+    padding: 10px;
+    margin-top: 12px;
+    font-size: 0.8rem;
   }
 }
 </style>

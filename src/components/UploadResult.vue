@@ -222,25 +222,87 @@ defineEmits(['copy-code', 'copy-link', 'new-upload'])
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .result-container {
+    padding: 25px 16px;
+  }
+
+  .success-icon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .success-message {
+    font-size: 0.95rem;
+    margin-bottom: 18px;
+  }
+
   .code-display {
-    font-size: 2rem;
+    font-size: 1.8rem;
     padding: 15px;
     letter-spacing: 2px;
+    margin: 18px 0;
+  }
+
+  .expiry-info {
+    font-size: 0.9rem;
+    margin-bottom: 22px;
   }
 
   .action-buttons {
     flex-direction: column;
+    gap: 10px;
   }
 
   .btn-action {
     width: 100%;
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+
+  .new-upload-btn {
+    padding: 14px;
+    font-size: 0.95rem;
   }
 }
 
 @media (max-width: 480px) {
+  .result-container {
+    padding: 20px 14px;
+  }
+
+  .success-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+
+  .success-message {
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
   .code-display {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     padding: 12px;
+    letter-spacing: 1px;
+  }
+
+  .expiry-info {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+
+  .btn-action {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .new-upload-btn {
+    padding: 12px;
+    font-size: 0.9rem;
   }
 }
 </style>
