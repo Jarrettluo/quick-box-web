@@ -317,13 +317,34 @@ onMounted(() => {
 }
 
 @media (max-width: 600px) {
+  .history-container {
+    margin-top: 20px;
+    padding: 10px;
+  }
+
+  .history-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  .history-title {
+    font-size: 1rem;
+  }
+
+  .btn-small {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
   .history-item {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
+    padding: 10px;
   }
 
   .file-name {
+    font-size: 0.9rem;
     white-space: normal;
     word-break: break-word;
   }
@@ -331,13 +352,36 @@ onMounted(() => {
   .file-meta {
     flex-direction: column;
     gap: 4px;
+    font-size: 0.75rem;
+  }
+
+  .file-size,
+  .upload-time,
+  .expires {
+    display: block;
   }
 
   .actions {
     align-self: flex-end;
+    gap: 6px;
   }
-  .history-container {
-    padding: 10px;
+
+  .empty-state {
+    padding: 20px 15px;
+  }
+
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .empty-state h4 {
+    font-size: 1rem;
+    margin-bottom: 6px;
+  }
+
+  .empty-state p {
+    font-size: 0.85rem;
   }
 }
 </style>

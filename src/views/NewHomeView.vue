@@ -1435,73 +1435,198 @@ footer {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .container {
-    padding: 15px;
+    padding: 12px;
+    margin: 0;
   }
 
   .card {
-    padding: 20px;
+    padding: 18px;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  }
+
+  header {
+    margin: 20px 0 25px;
   }
 
   .logo {
-    font-size: 2rem;
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+
+  .slogan {
+    font-size: 0.9rem;
+  }
+
+  .tab-container {
+    margin-bottom: 20px;
+    gap: 8px;
   }
 
   .tab {
-    padding: 10px 16px;
-    font-size: 0.95rem;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    border-radius: 8px 8px 0 0;
   }
 
   .file-input-label {
-    padding: 30px 15px;
-    min-height: 160px;
+    padding: 25px 12px;
+    min-height: 140px;
   }
 
   .file-input-icon svg {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .file-input-text span {
+    font-size: 1rem;
+  }
+
+  .code-input-enhanced {
+    font-size: 1.2rem;
+    padding: 16px;
+    letter-spacing: 3px;
   }
 
   .code-display {
-    font-size: 2rem;
+    font-size: 1.8rem;
     padding: 15px;
     letter-spacing: 2px;
   }
 
   .action-buttons {
     flex-direction: column;
+    gap: 10px;
   }
 
   .btn-action {
     width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+  }
+
+  .example-codes {
+    gap: 8px;
+  }
+
+  .example-code {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+
+  .download-notice {
+    padding: 16px;
+    margin: 20px 0;
+  }
+
+  .notice-header strong {
+    font-size: 0.95rem;
+  }
+
+  .notice-content {
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 480px) {
   .container {
-    padding: 10px;
+    padding: 8px;
   }
 
   .card {
-    padding: 15px;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  header {
+    margin: 16px 0 20px;
+  }
+
+  .logo {
+    font-size: 1.6rem;
+  }
+
+  .slogan {
+    font-size: 0.85rem;
   }
 
   .tab-container {
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
+    border-bottom: none;
   }
 
   .tab {
     width: 100%;
     text-align: center;
+    border-radius: 8px;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    background: var(--gray-light);
+  }
+
+  .tab.active {
+    border-color: var(--primary);
+    background: rgba(74, 107, 223, 0.1);
+  }
+
+  .file-input-label {
+    padding: 20px 10px;
+    min-height: 120px;
+  }
+
+  .file-input-icon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .file-input-text span {
+    font-size: 0.95rem;
+  }
+
+  .code-input-enhanced {
+    font-size: 1.1rem;
+    padding: 14px;
+    letter-spacing: 2px;
   }
 
   .code-display {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     padding: 12px;
   }
 
   .upload-progress-container {
-    padding: 15px;
+    padding: 12px;
+  }
+
+  .upload-progress-container h3 {
+    font-size: 1rem;
+  }
+
+  .progress-percent {
+    font-size: 1rem;
+  }
+
+  .example-codes {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .example-code {
+    width: 100%;
+    text-align: center;
+  }
+
+  .download-notice {
+    padding: 14px;
+    margin: 15px 0;
+  }
+
+  footer {
+    margin-top: 30px;
+    padding: 15px 0;
+    font-size: 0.8rem;
   }
 }
 
