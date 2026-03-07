@@ -124,7 +124,7 @@ const handleUpload = async () => {
         uploadError.value = error.message || '上传失败'
       },
       keepStructure: true,
-      autoZip: true,
+      autoZip: false, // 修改为 false，因为我们上传的是普通文件夹而不是已压缩的 ZIP 文件
       metadata: {}
     })
 
