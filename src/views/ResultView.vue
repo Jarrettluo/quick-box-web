@@ -1,43 +1,48 @@
 <template>
   <div class="container">
     <header>
-      <h1 class="logo">快取柜</h1>
-      <p class="slogan">QuickBox · 临时文件共享服务</p>
+      <div class="header-content">
+        <div class="title-area">
+          <h1 class="logo">{{ $t('app.logo') }}</h1>
+          <p class="slogan">{{ $t('app.slogan') }}</p>
+        </div>
+        <LanguageSelector />
+      </div>
     </header>
 
     <div class="card">
       <template v-if="isUploader">
-        <h2>上传成功！</h2>
-        <p>您的取件码：<strong>{{ code }}</strong></p>
+        <h2>{{ $t('resultPage.uploadSuccess') }}</h2>
+        <p>{{ $t('resultPage.yourCode') }}<strong>{{ code }}</strong></p>
         <FileCard :file="fileStore.fileInfo" />
         <div class="notice">
-          提示：此取件码7天内有效，文件被下载后自动删除
+          {{ $t('resultPage.tip') }}
         </div>
       </template>
 
       <template v-else>
         <div v-if="loading" class="loading">
-          正在加载文件信息...
+          {{ $t('resultPage.loading') }}
         </div>
         <div v-else-if="error" class="error-container">
-          <h2>获取文件信息失败</h2>
+          <h2>{{ $t('resultPage.getFileFailed') }}</h2>
           <div class="error-message">
             {{ error }}
           </div>
-          <button class="btn btn-block copy-btn" @click="goToHome">上传新文件</button>
+          <button class="btn btn-block copy-btn" @click="goToHome">{{ $t('resultPage.uploadNewFile') }}</button>
           <div class="notice">
-            提示：请检查取件码是否正确，或文件可能已被删除
+            {{ $t('resultPage.checkCode') }}
           </div>
         </div>
         <div v-else>
-          <h2>文件已准备就绪</h2>
+          <h2>{{ $t('resultPage.fileReady') }}</h2>
           <FileCard v-if="fileInfo"  :file="fileInfo" />
           <button class="btn btn-block" @click="downloadFile" :disabled="downloading">
-            {{ downloading ? '下载中...' : '立即下载' }}
+            {{ downloading ? $t('resultPage.downloading') : $t('resultPage.downloadNow') }}
           </button>
-          <button class="btn btn-block copy-btn" @click="goToHome">上传新文件</button>
+          <button class="btn btn-block copy-btn" @click="goToHome">{{ $t('resultPage.uploadNewFile') }}</button>
           <div class="notice">
-            注意：下载后文件将自动删除
+            {{ $t('resultPage.downloadTip') }}
           </div>
         </div>
       </template>
@@ -48,10 +53,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useFileStore } from '../stores/fileStore'
 import FileCard from "@/components/FileCard.vue"
 import { fileApi } from '@/api/fileService'
 import message from "@/utils/message.js";
+import LanguageSelector from '../components/LanguageSelector.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -109,20 +118,20 @@ const fetchFileInfo = async () => {
     if (err.response) {
       // 服务器响应错误
       if (err.response.status === 404) {
-        error.value = '文件不存在或已被删除'
+        error.value = t('resultPage.fileNotExist')
       } else if (err.response.status === 400) {
-        error.value = '取件码格式错误'
+        error.value = t('resultPage.codeFormatError')
       } else if (err.response.status === 500) {
-        error.value = '服务器内部错误，请稍后重试'
+        error.value = t('resultPage.serverError')
       } else {
-        error.value = `服务器错误 (${err.response.status}): ${err.response.data?.message || '未知错误'}`
+        error.value = `${t('resultPage.serverError')} (${err.response.status}): ${err.response.data?.message || 'Unknown error'}`
       }
     } else if (err.request) {
       // 请求发送但无响应
-      error.value = '网络连接失败，请检查网络连接'
+      error.value = t('resultPage.networkError')
     } else {
       // 其他错误
-      error.value = `获取文件信息失败: ${err.message || '未知错误'}`
+      error.value = `${t('resultPage.getFileFailed')}: ${err.message || 'Unknown error'}`
     }
   } finally {
     loading.value = false
@@ -152,7 +161,7 @@ const downloadFile = async () => {
     }, 1000)
 
   } catch (err) {
-    error.value = '下载文件失败：' + (err.response?.data?.message || err.message || '未知错误')
+    error.value = t('resultPage.downloadFailed') + (err.response?.data?.message || err.message || 'Unknown error')
   } finally {
     downloading.value = false
   }
@@ -231,6 +240,16 @@ body {
 header {
   text-align: center;
   margin: 40px 0;
+}
+.header-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.title-area {
+  text-align: center;
 }
 .logo {
   font-size: 2.5rem;

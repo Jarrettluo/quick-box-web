@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import i18n from './locales'
 import { initStorage } from './utils/storage'
 
 import './assets/css/global.css' // 添加这行
@@ -11,6 +12,7 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+app.use(i18n)
 
 // 初始化 IndexedDB
 initStorage().then(() => {

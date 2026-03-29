@@ -1,8 +1,13 @@
 <template>
   <div class="container">
     <header>
-      <h1 class="logo">快取柜3323</h1>
-      <p class="slogan">QuickBox · 临时文件共享服务</p>
+      <div class="header-content">
+        <div class="title-area">
+          <h1 class="logo">{{ $t('app.logo') }}</h1>
+          <p class="slogan">{{ $t('app.slogan') }}</p>
+        </div>
+        <LanguageSelector />
+      </div>
     </header>
 
     <div class="card">
@@ -12,21 +17,21 @@
             :class="{ active: activeTab === 'folder-upload' }"
             @click="switchTab('folder-upload')"
         >
-          上传文件夹
+          {{ $t('tabs.folderUpload') }}
         </button>
         <button
             class="tab"
             :class="{ active: activeTab === 'upload' }"
             @click="switchTab('upload')"
         >
-          上传文件
+          {{ $t('tabs.fileUpload') }}
         </button>
         <button
             class="tab"
             :class="{ active: activeTab === 'download' }"
             @click="switchTab('download')"
         >
-          提取文件
+          {{ $t('tabs.download') }}
         </button>
       </div>
       <!-- 上传文件夹区域 -->
@@ -525,7 +530,7 @@
     </Modal>
 
     <footer>
-      <p>© 2023 快取柜 QuickBox | 文件最长保留7天 | 完全匿名</p>
+      <p>{{ $t('app.footer') }}</p>
     </footer>
   </div>
 </template>
@@ -533,6 +538,7 @@
 <script setup>
 import {computed, ref} from 'vue'
 import {useRouter} from 'vue-router'
+import {useI18n} from 'vue-i18n'
 import {useFileStore} from '../stores/fileStore'
 import FileCard from '../components/FileCard.vue'
 import {FileUploadService} from '@/api/index.js'
@@ -543,6 +549,9 @@ import message from "@/utils/message.js";
 import Modal from '../components/Modal.vue';
 import ModalContent from '../components/ModalContent.vue';
 import {copyDownloadLink, copyPickupCode} from "@/utils/clipboard.js";
+import LanguageSelector from '../components/LanguageSelector.vue';
+
+const { t } = useI18n()
 
 
 const activeTab = ref('upload')
@@ -867,6 +876,18 @@ const handleConfirm = () => {
 header {
   text-align: center;
   margin: 40px 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.title-area {
+  text-align: center;
 }
 
 .logo {

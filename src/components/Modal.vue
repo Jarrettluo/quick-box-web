@@ -10,8 +10,8 @@
         <slot></slot>
       </div>
       <div class="modal-footer" v-if="showFooter">
-        <button class="btn btn-secondary" @click="close">取消</button>
-        <button class="btn btn-primary" @click="confirm">确认</button>
+        <button class="btn btn-secondary" @click="close">{{ $t('modal.cancel') }}</button>
+        <button class="btn btn-primary" @click="confirm">{{ $t('modal.confirm') }}</button>
       </div>
     </div>
   </div>
