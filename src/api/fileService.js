@@ -109,23 +109,12 @@ export const fileApi = {
     uploadFolderChunk(sessionId, chunkNumber, file, params = {}) {
         const formData = new FormData()
         formData.append('file', file)
-
-        // 添加所有必需参数
         formData.append('sessionId', sessionId)
         formData.append('chunkNumber', chunkNumber)
-        formData.append('totalChunks', params.totalChunks || 1)
-        formData.append('chunkSize', params.chunkSize || file.size)
+        formData.append('totalChunks', params.totalChunks)
         formData.append('currentChunkSize', file.size)
-        formData.append('totalSize', params.totalSize || file.size)
-        formData.append('identifier', params.identifier || file.name)
-        formData.append('filename', params.filename || file.name)
-
-        // 可选参数
-        if (params.relativePath !== undefined) formData.append('relativePath', params.relativePath)
-        if (params.isZipUpload !== undefined) formData.append('isZipUpload', params.isZipUpload)
-        if (params.zipFileIndex !== undefined) formData.append('zipFileIndex', params.zipFileIndex)
-        if (params.zipTotalChunks !== undefined) formData.append('zipTotalChunks', params.zipTotalChunks)
-        if (params.metadata !== undefined) formData.append('metadata', params.metadata)
+        formData.append('filename', params.filename)
+        formData.append('relativePath', params.relativePath)
 
         return request.post('/api/upload/folder/chunk', formData, {
             headers: {
@@ -436,84 +425,112 @@ export class FolderUploadService {
             onProgress,
             onFileProgress,
             onError,
-            keepStructure = true,
-            autoZip = false,
-            metadata = {}
+            expireSeconds = 604800
         } = options
 
         try {
-            // 1. 计算总大小和文件结构
+            // 1. 计算总大小和文件数
             const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0)
             const totalFiles = files.length
 
-            // 2. 构建文件结构JSON
-            const structure = this.buildFileStructure(files, keepStructure)
-
-            // 3. 初始化文件夹上传
-            const initData = {
+            // 2. 初始化文件夹上传（只传4个必需参数）
+            const initResponse = await fileApi.initFolderUpload({
                 folderName: folderName || 'untitled_folder',
                 totalFiles,
                 totalSize,
-                structureJson: JSON.stringify(structure),
-                autoZip,
-                keepStructure,
-                metadata: JSON.stringify(metadata),
-                files: structure.files
-            }
-
-            const initResponse = await fileApi.initFolderUpload(initData)
+                expireSeconds
+            })
             const { sessionId, folderId, accessCode } = initResponse
 
-            // 4. 上传所有文件
-            let uploadedSize = 0
-            let uploadedFiles = 0
-            const results = []
-
+            // 3. 构建所有分片任务队列
+            const tasks = []
             for (const file of files) {
                 const relativePath = file.webkitRelativePath || file.relativePath || file.name
                 const fileSize = file.size
                 const totalChunks = Math.ceil(fileSize / this.chunkSize)
 
-                // 上传单个文件的所有分片
                 for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
                     const start = (chunkNumber - 1) * this.chunkSize
                     const end = Math.min(start + this.chunkSize, fileSize)
-                    const chunkBlob = file.slice(start, end)
-                    const chunkFile = new File([chunkBlob], `${file.name}.part${chunkNumber}`)
-
-                    await fileApi.uploadFolderChunk(sessionId, chunkNumber, chunkFile, {
+                    tasks.push({
+                        file,
+                        relativePath,
+                        chunkNumber,
                         totalChunks,
-                        chunkSize: this.chunkSize,
-                        totalSize: fileSize,
-                        identifier: file.name,
-                        filename: file.name,
-                        relativePath,
-                        isZipUpload: autoZip
-                    })
-
-                    uploadedSize += (end - start)
-                    onFileProgress?.({
-                        file: file.name,
-                        relativePath,
-                        progress: Math.round((chunkNumber * 100) / totalChunks),
-                        uploadedSize: end - start,
-                        totalSize: fileSize
+                        start,
+                        end,
+                        fileSize
                     })
                 }
+            }
 
-                uploadedFiles++
-                results.push({ file: file.name, success: true })
+            // 4. 并行上传分片
+            let uploadedSize = 0
+            let completedTasks = 0
+            const totalTasks = tasks.length
 
-                // 更新整体进度
-                const overallProgress = Math.round((uploadedFiles * 100) / totalFiles)
+            // 并发控制器
+            const runTask = async (task) => {
+                const { file, relativePath, chunkNumber, totalChunks, start, end, fileSize } = task
+                const chunkBlob = file.slice(start, end)
+                const chunkFile = new File([chunkBlob], file.name, { type: file.type || 'application/octet-stream' })
+
+                await fileApi.uploadFolderChunk(sessionId, chunkNumber, chunkFile, {
+                    totalChunks,
+                    filename: file.name,
+                    relativePath
+                })
+
+                return { file, relativePath, chunkNumber, totalChunks, end: end - start, fileSize }
+            }
+
+            // 使用 Promise 池控制并发
+            const pool = []
+            let taskIndex = 0
+
+            const addToPool = async (task) => {
+                const result = await runTask(task)
+                uploadedSize += result.end
+                completedTasks++
+
+                // 更新进度
+                const overallProgress = Math.round((completedTasks * 100) / totalTasks)
                 onProgress?.({
                     overallProgress,
-                    uploadedFiles,
+                    uploadedFiles: Math.ceil(completedTasks / (totalTasks / totalFiles)),
                     totalFiles,
                     uploadedSize,
                     totalSize,
-                    currentFile: file.name
+                    currentFile: result.file.name
                 })
+
+                onFileProgress?.({
+                    file: result.file.name,
+                    relativePath: result.relativePath,
+                    progress: Math.round((result.chunkNumber * 100) / result.totalChunks),
+                    uploadedSize: result.end,
+                    totalSize: result.fileSize
+                })
+            }
+
+            const fillPool = async () => {
+                while (pool.length < this.concurrentUploads && taskIndex < tasks.length) {
+                    const task = tasks[taskIndex++]
+                    pool.push(addToPool(task).finally(() => {
+                        const idx = pool.indexOf(addToPool(task))
+                        if (idx > -1) pool.splice(idx, 1)
+                    }))
+                }
+                if (pool.length > 0) {
+                    await Promise.race(pool)
+                }
+            }
+
+            while (taskIndex < tasks.length) {
+                await fillPool()
+            }
+            if (pool.length > 0) {
+                await Promise.all(pool)
             }
 
             // 5. 合并分片
@@ -523,7 +540,7 @@ export class FolderUploadService {
                 sessionId,
                 folderId,
                 accessCode,
-                uploadedFiles: results.length,
+                uploadedFiles: totalFiles,
                 totalFiles
             }
 
@@ -531,39 +548,6 @@ export class FolderUploadService {
             onError?.(error)
             throw error
         }
-    }
-
-    // 构建文件结构
-    buildFileStructure(files, keepStructure) {
-        const fileItems = []
-        const structure = { files: fileItems, folders: {} }
-
-        for (const file of files) {
-            const relativePath = file.webkitRelativePath || file.relativePath || file.name
-            const pathParts = keepStructure ? relativePath.split('/') : [file.name]
-            const fileName = pathParts.pop()
-            const folderPath = keepStructure ? pathParts.join('/') : ''
-
-            fileItems.push({
-                fileName: fileName,
-                fileSize: file.size,
-                relativePath: keepStructure ? relativePath : fileName,
-                mimeType: file.type || 'application/octet-stream',
-                md5Hash: '', // 前端通常不计算MD5
-                chunkSize: this.chunkSize,
-                totalChunks: Math.ceil(file.size / this.chunkSize)
-            })
-
-            // 记录文件夹结构
-            if (keepStructure && folderPath) {
-                if (!structure.folders[folderPath]) {
-                    structure.folders[folderPath] = []
-                }
-                structure.folders[folderPath].push(fileName)
-            }
-        }
-
-        return structure
     }
 
     // 下载整个文件夹

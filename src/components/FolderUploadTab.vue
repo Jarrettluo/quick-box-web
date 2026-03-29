@@ -111,21 +111,15 @@ const handleUpload = async () => {
     const result = await folderUploadService.uploadFolder(selectedFolder.value, folderName, {
       onProgress: (progressInfo) => {
         uploadProgress.value = progressInfo.overallProgress
-        // 这里可以根据需要设置 currentChunk 和 totalChunks，但文件夹上传没有分片概念
-        // 我们可以用文件进度代替
         currentChunk.value = progressInfo.uploadedFiles
         totalChunks.value = progressInfo.totalFiles
       },
       onFileProgress: (fileProgress) => {
-        // 可以用于显示当前文件的上传进度
         console.log('File progress:', fileProgress)
       },
       onError: (error) => {
         uploadError.value = error.message || '上传失败'
-      },
-      keepStructure: true,
-      autoZip: false, // 修改为 false，因为我们上传的是普通文件夹而不是已压缩的 ZIP 文件
-      metadata: {}
+      }
     })
 
     // 上传成功，设置取件码和文件信息
