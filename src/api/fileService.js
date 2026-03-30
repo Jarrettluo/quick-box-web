@@ -146,20 +146,29 @@ export const fileApi = {
         return request.get(`/api/upload/folder/download/${accessCode}`, {
             responseType: 'blob'
         }).then(response => {
-            const disposition = response.headers['content-disposition'] ||
-                response.headers['Content-Disposition']
-            let filename = `folder_${accessCode}.zip`
+            console.log('文件夹下载响应:', response)
+            console.log('response.data 类型:', typeof response.data, response.data instanceof Blob)
 
-            if (disposition) {
-                const utf8FilenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
-                if (utf8FilenameMatch) {
-                    filename = decodeURIComponent(utf8FilenameMatch[1])
-                } else {
-                    const filenameMatch = disposition.match(/filename="([^"]+)"/i)
-                    if (filenameMatch) {
-                        filename = decodeURIComponent(filenameMatch[1].replace(/\+/g, ' '))
+            let filename = `${accessCode}.zip`
+
+            // 尝试从 header 中解析文件名
+            try {
+                const disposition = response.headers?.['content-disposition'] ||
+                    response.headers?.['Content-Disposition']
+                if (disposition) {
+                    const utf8FilenameMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+                    if (utf8FilenameMatch) {
+                        filename = decodeURIComponent(utf8FilenameMatch[1])
+                    } else {
+                        const filenameMatch = disposition.match(/filename="([^"]+)"/i)
+                        if (filenameMatch) {
+                            filename = decodeURIComponent(filenameMatch[1].replace(/\+/g, ' '))
+                        }
                     }
                 }
+            } catch (e) {
+                // 解析失败，使用默认文件名
+                console.warn('解析文件夹下载文件名失败，使用默认文件名')
             }
 
             return {
@@ -484,53 +493,33 @@ export class FolderUploadService {
                 return { file, relativePath, chunkNumber, totalChunks, end: end - start, fileSize }
             }
 
-            // 使用 Promise 池控制并发
-            const pool = []
-            let taskIndex = 0
+            // 使用批处理控制并发
+            for (let i = 0; i < totalTasks; i += this.concurrentUploads) {
+                const batch = tasks.slice(i, i + this.concurrentUploads)
+                await Promise.all(
+                    batch.map(task => runTask(task).then(result => {
+                        uploadedSize += result.end
+                        completedTasks++
 
-            const addToPool = async (task) => {
-                const result = await runTask(task)
-                uploadedSize += result.end
-                completedTasks++
+                        const overallProgress = Math.round((completedTasks * 100) / totalTasks)
+                        onProgress?.({
+                            overallProgress,
+                            uploadedFiles: Math.ceil(completedTasks / (totalTasks / totalFiles)),
+                            totalFiles,
+                            uploadedSize,
+                            totalSize,
+                            currentFile: result.file.name
+                        })
 
-                // 更新进度
-                const overallProgress = Math.round((completedTasks * 100) / totalTasks)
-                onProgress?.({
-                    overallProgress,
-                    uploadedFiles: Math.ceil(completedTasks / (totalTasks / totalFiles)),
-                    totalFiles,
-                    uploadedSize,
-                    totalSize,
-                    currentFile: result.file.name
-                })
-
-                onFileProgress?.({
-                    file: result.file.name,
-                    relativePath: result.relativePath,
-                    progress: Math.round((result.chunkNumber * 100) / result.totalChunks),
-                    uploadedSize: result.end,
-                    totalSize: result.fileSize
-                })
-            }
-
-            const fillPool = async () => {
-                while (pool.length < this.concurrentUploads && taskIndex < tasks.length) {
-                    const task = tasks[taskIndex++]
-                    pool.push(addToPool(task).finally(() => {
-                        const idx = pool.indexOf(addToPool(task))
-                        if (idx > -1) pool.splice(idx, 1)
+                        onFileProgress?.({
+                            file: result.file.name,
+                            relativePath: result.relativePath,
+                            progress: Math.round((result.chunkNumber * 100) / result.totalChunks),
+                            uploadedSize: result.end,
+                            totalSize: result.fileSize
+                        })
                     }))
-                }
-                if (pool.length > 0) {
-                    await Promise.race(pool)
-                }
-            }
-
-            while (taskIndex < tasks.length) {
-                await fillPool()
-            }
-            if (pool.length > 0) {
-                await Promise.all(pool)
+                )
             }
 
             // 5. 合并分片

@@ -30,7 +30,7 @@ instance.interceptors.response.use(
     (response) => {
 
         // 对于下载请求，返回完整响应对象以获取headers
-        if (response.config.url.includes('/upload/download')) {
+        if (response.config.url.includes('/download')) {
             return response // 返回完整响应对象
         }
 
@@ -43,6 +43,11 @@ instance.interceptors.response.use(
         return response.data
     },
     (error) => {
+        // 对于下载请求的错误，也返回完整响应对象以便调用方处理
+        if (error.config?.url?.includes('/download')) {
+            return error.response // 返回完整错误响应对象
+        }
+
         // 处理上传错误
         if (error.config?.url?.includes('/upload')) {
             message.error('上传失败：' + (error.response?.data?.message || error.message))

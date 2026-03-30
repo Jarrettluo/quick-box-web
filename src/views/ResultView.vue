@@ -75,6 +75,7 @@ const loading = ref(false)
 const error = ref('')
 const fileInfo = ref(null)
 const downloading = ref(false)
+const fileType = ref('file')
 
 // 格式化文件大小
 const formatFileSize = (bytes) => {
@@ -104,12 +105,29 @@ const fetchFileInfo = async () => {
   try {
     const data = await fileApi.getFileInfo(code)
 
+    // 保存文件类型
+    fileType.value = data.type || 'file'
+
     // 格式化文件信息
-    fileInfo.value = {
-      name: data.filename,
-      size: formatFileSize(data.size),
-      lastModified: formatDate(data.lastModified),
-      downloadUrl: data.downloadUrl
+    if (fileType.value === 'folder') {
+      // 文件夹信息
+      fileInfo.value = {
+        name: data.folderName || data.filename,
+        size: formatFileSize(data.totalSize || 0),
+        lastModified: formatDate(data.lastModified),
+        downloadUrl: data.downloadUrl,
+        totalFiles: data.totalFiles,
+        type: 'folder'
+      }
+    } else {
+      // 文件信息
+      fileInfo.value = {
+        name: data.filename,
+        size: formatFileSize(data.size),
+        lastModified: formatDate(data.lastModified),
+        downloadUrl: data.downloadUrl,
+        type: 'file'
+      }
     }
   } catch (err) {
     console.error('获取文件信息失败:', err)
@@ -140,12 +158,22 @@ const fetchFileInfo = async () => {
 
 // 下载文件
 const downloadFile = async () => {
+  // 文件夹直接用 URL 下载，让浏览器处理文件名
+  if (fileType.value === 'folder') {
+    window.open(`/api/upload/folder/download/${code}`, '_blank')
+    return
+  }
+
+  // 文件用 blob 下载
   downloading.value = true
 
   try {
     const result = await fileApi.downloadFile(code)
 
-    // 创建下载链接
+    if (!result?.blob || !(result.blob instanceof Blob)) {
+      throw new Error('Invalid response: not a blob')
+    }
+
     const url = window.URL.createObjectURL(result.blob)
     const link = document.createElement('a')
     link.href = url
@@ -155,13 +183,13 @@ const downloadFile = async () => {
     link.remove()
     window.URL.revokeObjectURL(url)
 
-    // 下载完成后可以跳转回首页
     setTimeout(() => {
       router.push('/')
     }, 1000)
 
   } catch (err) {
-    error.value = t('resultPage.downloadFailed') + (err.response?.data?.message || err.message || 'Unknown error')
+    console.error('下载失败:', err)
+    error.value = t('resultPage.downloadFailed') + (err.message || 'Unknown error')
   } finally {
     downloading.value = false
   }
