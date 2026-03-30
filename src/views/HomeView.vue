@@ -507,6 +507,14 @@
       <ModalContent/>
     </Modal>
 
+    <!-- 分享下载链接弹窗 -->
+    <ShareModal
+        :isVisible="showShareModal"
+        :link="downloadLink"
+        @close="showShareModal = false"
+        @link-copied="showShareModal = false"
+    />
+
     <footer>
       <p>{{ $t('app.footer') }}</p>
     </footer>
@@ -526,6 +534,7 @@ import message from "@/utils/message.js";
 
 import Modal from '../components/Modal.vue';
 import ModalContent from '../components/ModalContent.vue';
+import ShareModal from '../components/ShareModal.vue';
 import {copyDownloadLink, copyPickupCode} from "@/utils/clipboard.js";
 import LanguageSelector from '../components/LanguageSelector.vue';
 
@@ -554,6 +563,7 @@ const fileStore = useFileStore()
 const router = useRouter()
 
 const showModal = ref(false)
+const showShareModal = ref(false)
 
 // 计算下载链接
 const downloadLink = computed(() => {
@@ -761,25 +771,9 @@ const copyCode = async () => {
 }
 
 
-const copyLink = async () => {
+const copyLink = () => {
   if (fileStore.pickupCode) {
-    const success = await copyDownloadLink(
-        fileStore.pickupCode,
-        (link) => {
-          message.success(t('message.linkCopied'))
-          console.log('复制的链接:', link)
-        },
-        () => {
-          message.error(t('message.copyLinkFailed'))
-        }
-    )
-
-    if (!success) {
-// 如果复制失败，显示链接让用户手动复制
-      const baseUrl = window.location.origin
-      const downloadLink = `${baseUrl}/result/${fileStore.pickupCode}`
-      message.info(`${t('message.linkCopied')}: ${downloadLink}`)
-    }
+    showShareModal.value = true
   } else {
     message.error(t('message.generateCodeFirst'))
   }

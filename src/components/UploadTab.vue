@@ -25,11 +25,19 @@
 
     <FileCard v-if="isUploaded && fileStore.fileInfo" :file="fileStore.fileInfo" />
     <HistoryView />
+
+    <!-- 分享下载链接弹窗 -->
+    <ShareModal
+        :isVisible="showShareModal"
+        :link="downloadLink"
+        @close="showShareModal = false"
+        @link-copied="showShareModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useFileStore } from '../stores/fileStore.js'
 import { FileUploadService } from '@/api/index.js'
 import message from '@/utils/message.js'
@@ -38,6 +46,7 @@ import FileUploader from './FileUploader.vue'
 import UploadResult from './UploadResult.vue'
 import FileCard from './FileCard.vue'
 import HistoryView from '@/views/HistoryView.vue'
+import ShareModal from './ShareModal.vue'
 
 const fileStore = useFileStore()
 const selectedFiles = ref([])
@@ -47,6 +56,13 @@ const uploadProgress = ref(0)
 const currentChunk = ref(0)
 const totalChunks = ref(0)
 const uploadError = ref('')
+const showShareModal = ref(false)
+
+const downloadLink = computed(() => {
+  if (!fileStore.pickupCode) return ''
+  const baseUrl = window.location.origin
+  return `${baseUrl}/result/${fileStore.pickupCode}`
+})
 
 // 创建文件上传服务实例
 const uploadService = new FileUploadService({
@@ -167,24 +183,9 @@ const copyCode = async () => {
   }
 }
 
-const copyLink = async () => {
+const copyLink = () => {
   if (fileStore.pickupCode) {
-    const success = await copyDownloadLink(
-        fileStore.pickupCode,
-        (link) => {
-          message.success('下载链接已复制到剪贴板')
-          console.log('复制的链接:', link)
-        },
-        () => {
-          message.error('复制链接失败，请手动复制')
-        }
-    )
-
-    if (!success) {
-      const baseUrl = window.location.origin
-      const downloadLink = `${baseUrl}/result/${fileStore.pickupCode}`
-      message.info(`下载链接：${downloadLink}`)
-    }
+    showShareModal.value = true
   } else {
     message.error("请先生成取件码")
   }
