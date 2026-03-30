@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFileStore } from '../stores/fileStore'
@@ -76,6 +76,8 @@ const error = ref('')
 const fileInfo = ref(null)
 const downloading = ref(false)
 const fileType = ref('file')
+const remainingSeconds = ref(0)
+let countdownTimer = null
 
 // 格式化文件大小
 const formatFileSize = (bytes) => {
@@ -84,6 +86,24 @@ const formatFileSize = (bytes) => {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+// 格式化剩余时间（倒计时）
+const formatRemainingTime = (seconds) => {
+  if (seconds <= 0) return '已过期'
+
+  const days = Math.floor(seconds / 86400)
+  const hours = Math.floor((seconds % 86400) / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+
+  const parts = []
+  if (days > 0) parts.push(`${days}天`)
+  if (hours > 0) parts.push(`${hours}小时`)
+  if (minutes > 0) parts.push(`${minutes}分`)
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}秒`)
+
+  return parts.join('')
 }
 
 // 格式化日期
@@ -117,7 +137,8 @@ const fetchFileInfo = async () => {
         lastModified: formatDate(data.lastModified),
         downloadUrl: data.downloadUrl,
         totalFiles: data.totalFiles,
-        type: 'folder'
+        type: 'folder',
+        expires: formatRemainingTime(data.remainingExpireSeconds || 0)
       }
     } else {
       // 文件信息
@@ -126,9 +147,14 @@ const fetchFileInfo = async () => {
         size: formatFileSize(data.size),
         lastModified: formatDate(data.lastModified),
         downloadUrl: data.downloadUrl,
-        type: 'file'
+        type: 'file',
+        expires: formatRemainingTime(data.remainingExpireSeconds || 0)
       }
     }
+
+    // 设置剩余时间并启动倒计时
+    remainingSeconds.value = data.remainingExpireSeconds || 0
+    startCountdown()
   } catch (err) {
     console.error('获取文件信息失败:', err)
 
@@ -195,6 +221,29 @@ const downloadFile = async () => {
   }
 }
 
+// 启动倒计时
+const startCountdown = () => {
+  stopCountdown()
+  countdownTimer = setInterval(() => {
+    if (remainingSeconds.value > 0) {
+      remainingSeconds.value--
+      if (fileInfo.value) {
+        fileInfo.value.expires = formatRemainingTime(remainingSeconds.value)
+      }
+    } else {
+      stopCountdown()
+    }
+  }, 1000)
+}
+
+// 停止倒计时
+const stopCountdown = () => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+}
+
 // 返回首页
 const goToHome = () => {
   router.push('/')
@@ -203,6 +252,11 @@ const goToHome = () => {
 // 组件挂载时获取文件信息
 onMounted(() => {
   fetchFileInfo()
+})
+
+// 组件卸载时清理倒计时
+onUnmounted(() => {
+  stopCountdown()
 })
 </script>
 

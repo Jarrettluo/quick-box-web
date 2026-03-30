@@ -1,6 +1,6 @@
 <template>
   <div class="file-card">
-    <div class="file-icon">📄</div>
+    <div class="file-icon">{{ file.type === 'folder' ? '📁' : '📄' }}</div>
     <div class="file-details">
       <h3>{{ file.name }}</h3>
       <p>大小: {{ file.size }}</p>
