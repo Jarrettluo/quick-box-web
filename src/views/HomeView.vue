@@ -527,7 +527,7 @@ import {useRouter} from 'vue-router'
 import {useI18n} from 'vue-i18n'
 import {useFileStore} from '../stores/fileStore'
 import FileCard from '../components/FileCard.vue'
-import {FileUploadService} from '@/api/index.js'
+import {FileUploadService} from '@/api/fileService.js'
 import {FolderUploadService} from '@/api/fileService.js'
 import HistoryView from "@/views/HistoryView.vue";
 import message from "@/utils/message.js";
