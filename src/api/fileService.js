@@ -146,9 +146,6 @@ export const fileApi = {
         return request.get(`/api/upload/folder/download/${accessCode}`, {
             responseType: 'blob'
         }).then(response => {
-            console.log('文件夹下载响应:', response)
-            console.log('response.data 类型:', typeof response.data, response.data instanceof Blob)
-
             let filename = `${accessCode}.zip`
 
             // 尝试从 header 中解析文件名
@@ -168,7 +165,6 @@ export const fileApi = {
                 }
             } catch (e) {
                 // 解析失败，使用默认文件名
-                console.warn('解析文件夹下载文件名失败，使用默认文件名')
             }
 
             return {

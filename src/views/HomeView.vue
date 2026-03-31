@@ -535,7 +535,7 @@ import message from "@/utils/message.js";
 import Modal from '../components/Modal.vue';
 import ModalContent from '../components/ModalContent.vue';
 import ShareModal from '../components/ShareModal.vue';
-import {copyDownloadLink, copyPickupCode} from "@/utils/clipboard.js";
+import {copyPickupCode} from "@/utils/clipboard.js";
 import LanguageSelector from '../components/LanguageSelector.vue';
 
 const { t } = useI18n()
@@ -610,20 +610,17 @@ const folderUploadService = new FolderUploadService({
 })
 
 const switchTab = (tab) => {
-  console.log('Switching to tab:', tab)
   activeTab.value = tab
 }
 
 const handleFileChange = (event) => {
   selectedFile.value = event.target.files[0]
   uploadError.value = ''
-  console.log('Selected file:', selectedFile.value)
 }
 
 const handleFolderChange = (event) => {
   selectedFolder.value = event.target.files
   folderUploadError.value = ''
-  console.log('Selected folder:', selectedFolder.value, 'file count:', selectedFolder.value.length)
 }
 
 const removeFile = () => {
@@ -687,7 +684,6 @@ const handleUpload = async () => {
     isUploaded.value = true
 
   } catch (error) {
-    console.error('Upload failed:', error)
     uploadError.value = error.message || t('upload.uploadFailed') + ', please retry'
   } finally {
     isUploading.value = false
@@ -715,7 +711,6 @@ const handleFolderUpload = async () => {
       },
       onFileProgress: (fileProgress) => {
         // 可以用于显示当前文件的上传进度，但这里我们主要使用整体进度
-        console.log('File progress:', fileProgress)
       },
       onError: (error) => {
         folderUploadError.value = error.message || t('upload.uploadFailed')
@@ -742,7 +737,6 @@ const handleFolderUpload = async () => {
     folderUploaded.value = true
 
   } catch (error) {
-    console.error('Folder upload failed:', error)
     folderUploadError.value = error.message || t('upload.uploadFailed') + ', please retry'
   } finally {
     folderUploading.value = false

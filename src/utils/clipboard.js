@@ -11,7 +11,6 @@
  */
 export const copyToClipboard = async (text, itemName = '内容') => {
     if (!text) {
-        console.warn('复制内容为空')
         return false
     }
 
@@ -25,7 +24,6 @@ export const copyToClipboard = async (text, itemName = '内容') => {
         // 方法2: 降级到 execCommand
         return fallbackCopyToClipboard(text)
     } catch (error) {
-        console.error('复制失败:', error)
         // 方法3: 提示用户手动复制
         promptManualCopy(text, itemName)
         return false
@@ -64,7 +62,6 @@ const fallbackCopyToClipboard = (text) => {
 
         return successful
     } catch (error) {
-        console.error('降级复制方法失败:', error)
         return false
     }
 }
@@ -76,12 +73,7 @@ const fallbackCopyToClipboard = (text) => {
  */
 const promptManualCopy = (text, itemName) => {
     // 显示提示框让用户手动复制
-    const message = `${itemName}：${text}`
-    const result = window.prompt(`请手动复制${itemName}：`, text)
-
-    if (result !== null) {
-        console.log('用户确认手动复制')
-    }
+    window.prompt(`请手动复制${itemName}：`, text)
 }
 
 /**

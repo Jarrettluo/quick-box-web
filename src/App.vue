@@ -6,13 +6,9 @@
 </template>
 
 <script setup>
-// import { onMounted } from 'vue'
 import {useFileStore} from './stores/fileStore'
 
 const fileStore = useFileStore()
-// onMounted(() => {
-//   fileStore.$reset()
-// })
 </script>
 
 <style>

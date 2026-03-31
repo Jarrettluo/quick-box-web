@@ -52,13 +52,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore'
 import message from '@/utils/message.js'
 import {copyPickupCode} from "@/utils/clipboard.js";
 
 const { t } = useI18n()
-const router = useRouter()
 const fileStore = useFileStore()
 const loading = ref(false)
 const copiedCode = ref('')

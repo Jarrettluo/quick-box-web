@@ -57,7 +57,6 @@ import { useI18n } from 'vue-i18n'
 import { useFileStore } from '../stores/fileStore'
 import FileCard from "@/components/FileCard.vue"
 import { fileApi } from '@/api/fileService'
-import message from "@/utils/message.js";
 import LanguageSelector from '../components/LanguageSelector.vue'
 
 const { t } = useI18n()

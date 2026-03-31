@@ -80,7 +80,7 @@ const generateQRCode = async () => {
       }
     })
   } catch (err) {
-    console.error('生成二维码失败:', err)
+    // 二维码生成失败，静静忽略
   }
 }
 
