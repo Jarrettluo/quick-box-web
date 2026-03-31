@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: '上传历史记录',
+    clearHistory: '清空历史',
+    loading: '加载中...',
+    noRecords: '暂无上传记录',
+    noRecordsHint: '您上传的文件将显示在这里',
+    expiresAt: '有效期至',
+    copyCode: '复制取件码',
+    copied: '已复制',
+    delete: '删除',
+    confirmDelete: '确定要删除这条记录吗？',
+    recordDeleted: '记录已删除',
+    deleteFailed: '删除失败',
+    confirmClearAll: '确定要清空所有历史记录吗？此操作不可撤销。',
+    historyCleared: '历史记录已清空',
+    clearFailed: '清空失败'
+  },
+  timeUnits: {
+    expired: '已过期',
+    day: '天',
+    hour: '小时',
+    minute: '分',
+    second: '秒'
+  },
+  fileCard: {
+    size: '大小',
+    expires: '过期时间'
   }
 }

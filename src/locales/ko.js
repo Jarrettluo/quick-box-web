@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: '업로드 히스토리',
+    clearHistory: '히스토리 지우기',
+    loading: '로딩 중...',
+    noRecords: '업로드 기록 없음',
+    noRecordsHint: '업로드한 파일이 여기에 표시됩니다',
+    expiresAt: '유효 기간',
+    copyCode: '수령 코드 복사',
+    copied: '복사됨',
+    delete: '삭제',
+    confirmDelete: '이 기록을 삭제하시겠습니까?',
+    recordDeleted: '기록이 삭제되었습니다',
+    deleteFailed: '삭제 실패',
+    confirmClearAll: '모든 히스토리를 지우시겠습니까? 이 작업은 취소할 수 없습니다.',
+    historyCleared: '히스토리가 지워졌습니다',
+    clearFailed: '지우기 실패'
+  },
+  timeUnits: {
+    expired: '만료됨',
+    day: '일',
+    hour: '시간',
+    minute: '분',
+    second: '초'
+  },
+  fileCard: {
+    size: '크기',
+    expires: '만료 시간'
   }
 }

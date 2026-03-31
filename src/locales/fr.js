@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: 'Historique des téléchargements',
+    clearHistory: 'Effacer l\'historique',
+    loading: 'Chargement...',
+    noRecords: 'Aucun enregistrement de téléchargement',
+    noRecordsHint: 'Vos fichiers téléchargés apparaîtront ici',
+    expiresAt: 'Expire le',
+    copyCode: 'Copier le code',
+    copied: 'Copié',
+    delete: 'Supprimer',
+    confirmDelete: 'Êtes-vous sûr de vouloir supprimer cet enregistrement ?',
+    recordDeleted: 'Enregistrement supprimé',
+    deleteFailed: 'Échec de la suppression',
+    confirmClearAll: 'Êtes-vous sûr de vouloir effacer tout l\'historique ? Cette action ne peut pas être annulée.',
+    historyCleared: 'Historique effacé',
+    clearFailed: 'Échec de l\'effacement'
+  },
+  timeUnits: {
+    expired: 'Expiré',
+    day: 'j',
+    hour: 'h',
+    minute: 'm',
+    second: 's'
+  },
+  fileCard: {
+    size: 'Taille',
+    expires: 'Expire le'
   }
 }

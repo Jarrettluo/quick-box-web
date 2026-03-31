@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: 'Upload History',
+    clearHistory: 'Clear History',
+    loading: 'Loading...',
+    noRecords: 'No Upload Records',
+    noRecordsHint: 'Your uploaded files will appear here',
+    expiresAt: 'Expires',
+    copyCode: 'Copy Pickup Code',
+    copied: 'Copied',
+    delete: 'Delete',
+    confirmDelete: 'Are you sure you want to delete this record?',
+    recordDeleted: 'Record deleted',
+    deleteFailed: 'Delete failed',
+    confirmClearAll: 'Are you sure you want to clear all history? This action cannot be undone.',
+    historyCleared: 'History cleared',
+    clearFailed: 'Clear failed'
+  },
+  timeUnits: {
+    expired: 'Expired',
+    day: 'd',
+    hour: 'h',
+    minute: 'm',
+    second: 's'
+  },
+  fileCard: {
+    size: 'Size',
+    expires: 'Expires'
   }
 }

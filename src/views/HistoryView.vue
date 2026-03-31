@@ -1,24 +1,24 @@
 <template>
   <div class="history-container">
     <div class="history-header">
-      <h4 class="history-title">上传历史记录</h4>
+      <h4 class="history-title">{{ $t('history.title') }}</h4>
       <button
           class="btn btn-danger btn-small"
           @click="clearHistory"
           :disabled="fileStore.history.length === 0"
       >
-        清空历史
+        {{ $t('history.clearHistory') }}
       </button>
     </div>
 
     <div v-if="loading" class="loading">
-      加载中...
+      {{ $t('history.loading') }}
     </div>
 
     <div v-else-if="fileStore.history.length === 0" class="empty-state">
       <div class="empty-icon">📁</div>
-      <h4>暂无上传记录</h4>
-      <p>您上传的文件将显示在这里</p>
+      <h4>{{ $t('history.noRecords') }}</h4>
+      <p>{{ $t('history.noRecordsHint') }}</p>
     </div>
 
     <div v-else class="history-list">
@@ -29,19 +29,19 @@
             <span class="file-size">{{ formatFileSize(item.size) }}</span>
             <span class="upload-time">{{ formatDate(item.uploadTime) }}</span>
             <span class="expires" :class="{ 'expiring': isExpiring(item.expiresAt) }">
-              有效期至: {{ formatDate(item.expiresAt) }}
+              {{ $t('history.expiresAt') }}: {{ formatDate(item.expiresAt) }}
             </span>
           </div>
         </div>
         <div class="actions">
           <button class="btn btn-small copy-btn" @click="copyCode(item.code)">
-            {{ copiedCode === item.code ? '已复制' : '复制取件码' }}
+            {{ copiedCode === item.code ? $t('history.copied') : $t('history.copyCode') }}
           </button>
           <button
               class="btn btn-small btn-danger"
               @click="deleteRecord(item.code)"
           >
-            删除
+            {{ $t('history.delete') }}
           </button>
         </div>
       </div>
@@ -51,11 +51,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFileStore } from '@/stores/fileStore'
 import message from '@/utils/message.js'
 import {copyPickupCode} from "@/utils/clipboard.js";
 
+const { t } = useI18n()
 const router = useRouter()
 const fileStore = useFileStore()
 const loading = ref(false)
@@ -97,64 +99,48 @@ const isExpiring = (expiresAt) => {
 }
 
 // 复制取件码
-const copyCode1 = async (code) => {
-  try {
-    await navigator.clipboard.writeText(code)
-    copiedCode.value = code
-    message.success('取件码已复制到剪贴板')
-
-    // 3秒后重置复制状态
-    setTimeout(() => {
-      copiedCode.value = ''
-    }, 3000)
-  } catch (err) {
-    console.error('复制失败:', err)
-    message.error('复制失败，请手动复制')
-  }
-}
-
 const copyCode = async (code) => {
   if (code) {
     const success = await copyPickupCode(
         code,
         (code) => {
-          message.success(`取件码 ${code} 已复制到剪贴板`)
+          message.success(t('message.codeCopied', { code }))
         },
         () => {
-          message.error('复制取件码失败，请手动复制')
+          message.error(t('message.copyCodeFailed'))
         }
     )
 
     if (!success) {
       // 如果复制失败，显示取件码让用户手动复制
-      message.info(`取件码：${code}`)
+      message.info(`${t('result.yourCode')}${code}`)
     }
   } else {
-    message.error("没有可复制的取件码")
+    message.error(t('message.noCode'))
   }
 }
 
 
 // 删除记录
 const deleteRecord = async (code) => {
-  if (confirm('确定要删除这条记录吗？')) {
+  if (confirm(t('history.confirmDelete'))) {
     const success = await fileStore.deleteHistoryRecord(code)
     if (success) {
-      message.success('记录已删除')
+      message.success(t('history.recordDeleted'))
     } else {
-      message.error('删除失败')
+      message.error(t('history.deleteFailed'))
     }
   }
 }
 
 // 清空历史
 const clearHistory = async () => {
-  if (confirm('确定要清空所有历史记录吗？此操作不可撤销。')) {
+  if (confirm(t('history.confirmClearAll'))) {
     const success = await fileStore.clearHistory()
     if (success) {
-      message.success('历史记录已清空')
+      message.success(t('history.historyCleared'))
     } else {
-      message.error('清空失败')
+      message.error(t('history.clearFailed'))
     }
   }
 }

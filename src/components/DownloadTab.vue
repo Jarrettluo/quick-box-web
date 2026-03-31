@@ -10,7 +10,7 @@
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
-          输入6位取件码
+          {{ $t('download.inputCode') }}
         </label>
 
         <!-- 改进的取件码输入区域 -->
@@ -19,16 +19,16 @@
               type="text"
               id="code"
               v-model="downloadCode"
-              placeholder="例如: 3A7B9C"
+              :placeholder="$t('download.placeholder')"
               required
               maxlength="6"
               class="code-input-enhanced"
               :class="{ 'has-value': downloadCode.length > 0 }"
           >
           <div class="code-input-hint">
-            <span v-if="downloadCode.length === 0">请输入6位字母数字组合</span>
+            <span v-if="downloadCode.length === 0">{{ $t('download.enterCode') }}</span>
             <span v-else class="code-length-indicator">
-              已输入 {{ downloadCode.length }}/6 位
+              {{ $t('download.entered') }} {{ downloadCode.length }}/6 {{ $t('download.bits') }}
             </span>
           </div>
         </div>
@@ -43,12 +43,12 @@
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
-          <strong>重要提示</strong>
+          <strong>{{ $t('download.importantNotice') }}</strong>
         </div>
         <div class="notice-content">
-          <p> 每个取件码仅能使用一次，文件下载后立即失效</p>
-          <p> 取件码区分大小写，请准确输入</p>
-          <p> 文件最长保留7天，过期自动删除</p>
+          <p>{{ $t('download.notice1') }}</p>
+          <p>{{ $t('download.notice2') }}</p>
+          <p>{{ $t('download.notice3') }}</p>
         </div>
       </div>
 
@@ -65,7 +65,7 @@
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-        提取文件
+        {{ $t('download.extractFile') }}
       </button>
     </form>
   </div>

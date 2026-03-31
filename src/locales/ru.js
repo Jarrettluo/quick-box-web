@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: 'История загрузок',
+    clearHistory: 'Очистить историю',
+    loading: 'Загрузка...',
+    noRecords: 'Нет записей о загрузках',
+    noRecordsHint: 'Загруженные вами файлы будут отображаться здесь',
+    expiresAt: 'Срок действия',
+    copyCode: 'Копировать код',
+    copied: 'Скопировано',
+    delete: 'Удалить',
+    confirmDelete: 'Вы уверены, что хотите удалить эту запись?',
+    recordDeleted: 'Запись удалена',
+    deleteFailed: 'Не удалось удалить',
+    confirmClearAll: 'Вы уверены, что хотите очистить всю историю? Это действие нельзя отменить.',
+    historyCleared: 'История очищена',
+    clearFailed: 'Не удалось очистить'
+  },
+  timeUnits: {
+    expired: 'Истёк',
+    day: 'д',
+    hour: 'ч',
+    minute: 'м',
+    second: 'с'
+  },
+  fileCard: {
+    size: 'Размер',
+    expires: 'Истекает'
   }
 }

@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: 'Upload-Verlauf',
+    clearHistory: 'Verlauf löschen',
+    loading: 'Wird geladen...',
+    noRecords: 'Keine Upload-Aufzeichnungen',
+    noRecordsHint: 'Ihre hochgeladenen Dateien werden hier angezeigt',
+    expiresAt: 'Läuft ab',
+    copyCode: 'Code kopieren',
+    copied: 'Kopiert',
+    delete: 'Löschen',
+    confirmDelete: 'Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?',
+    recordDeleted: 'Eintrag gelöscht',
+    deleteFailed: 'Löschen fehlgeschlagen',
+    confirmClearAll: 'Sind Sie sicher, dass Sie den gesamten Verlauf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+    historyCleared: 'Verlauf gelöscht',
+    clearFailed: 'Löschen fehlgeschlagen'
+  },
+  timeUnits: {
+    expired: 'Abgelaufen',
+    day: 'd',
+    hour: 'h',
+    minute: 'm',
+    second: 's'
+  },
+  fileCard: {
+    size: 'Größe',
+    expires: 'Läuft ab'
   }
 }

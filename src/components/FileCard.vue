@@ -3,8 +3,8 @@
     <div class="file-icon">{{ file.type === 'folder' ? '📁' : '📄' }}</div>
     <div class="file-details">
       <h3>{{ file.name }}</h3>
-      <p>大小: {{ file.size }}</p>
-      <p>过期时间: {{ file.expires }}</p>
+      <p>{{ $t('fileCard.size') }}: {{ file.size }}</p>
+      <p>{{ $t('fileCard.expires') }}: {{ file.expires }}</p>
     </div>
   </div>
 </template>

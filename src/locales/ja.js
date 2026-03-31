@@ -94,5 +94,33 @@ export default {
     ru: 'Русский',
     de: 'Deutsch',
     fr: 'Français'
+  },
+  history: {
+    title: 'アップロード履歴',
+    clearHistory: '履歴をクリア',
+    loading: '読み込み中...',
+    noRecords: 'アップロード記録なし',
+    noRecordsHint: 'アップロードしたファイルがここに表示されます',
+    expiresAt: '有効期限',
+    copyCode: '受取コードをコピー',
+    copied: 'コピー済み',
+    delete: '削除',
+    confirmDelete: 'この記録を削除してもよろしいですか？',
+    recordDeleted: '記録が削除されました',
+    deleteFailed: '削除に失敗しました',
+    confirmClearAll: 'すべての履歴をクリアしてもよろしいですか？この操作は取り消せません。',
+    historyCleared: '履歴がクリアされました',
+    clearFailed: 'クリアに失敗しました'
+  },
+  timeUnits: {
+    expired: '期限切れ',
+    day: '日',
+    hour: '時間',
+    minute: '分',
+    second: '秒'
+  },
+  fileCard: {
+    size: 'サイズ',
+    expires: '有効期限'
   }
 }

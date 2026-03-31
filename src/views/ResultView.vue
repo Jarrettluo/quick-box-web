@@ -90,7 +90,7 @@ const formatFileSize = (bytes) => {
 
 // 格式化剩余时间（倒计时）
 const formatRemainingTime = (seconds) => {
-  if (seconds <= 0) return '已过期'
+  if (seconds <= 0) return t('timeUnits.expired')
 
   const days = Math.floor(seconds / 86400)
   const hours = Math.floor((seconds % 86400) / 3600)
@@ -98,10 +98,10 @@ const formatRemainingTime = (seconds) => {
   const secs = seconds % 60
 
   const parts = []
-  if (days > 0) parts.push(`${days}天`)
-  if (hours > 0) parts.push(`${hours}小时`)
-  if (minutes > 0) parts.push(`${minutes}分`)
-  if (secs > 0 || parts.length === 0) parts.push(`${secs}秒`)
+  if (days > 0) parts.push(`${days}${t('timeUnits.day')}`)
+  if (hours > 0) parts.push(`${hours}${t('timeUnits.hour')}`)
+  if (minutes > 0) parts.push(`${minutes}${t('timeUnits.minute')}`)
+  if (secs > 0 || parts.length === 0) parts.push(`${secs}${t('timeUnits.second')}`)
 
   return parts.join('')
 }
