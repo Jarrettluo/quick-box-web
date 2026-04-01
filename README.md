@@ -164,3 +164,89 @@ build: {
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
+
+## 🐳 Docker 部署方案
+
+### 前置要求
+- Docker
+- Nginx (用于反向代理)
+- 已部署的后端服务
+
+### 快速部署 (与后端一起)
+
+后端项目 `deploy/docker-compose.yml` 已包含前端 Nginx 服务。
+
+```bash
+# 1. 克隆后端项目
+git clone -b develop https://github.com/Jarrettluo/quick-box-server.git
+cd quick-box-server/deploy
+
+# 2. 配置并启动 (后端 + 前端)
+docker-compose up -d
+
+# 3. 前端访问 (通过后端 Nginx)
+# 默认: http://localhost:80
+```
+
+### 单独部署前端
+
+如果你只需要部署前端 (后端已单独运行):
+
+```bash
+# 1. 克隆前端项目
+git clone -b develop https://github.com/Jarrettluo/quick-box-web.git
+cd quick-box-web
+
+# 2. 安装依赖并构建
+npm install
+npm run build
+
+# 3. 使用 Nginx 部署
+# 将 dist 目录复制到 Nginx 的 html 目录
+# 配置 nginx.conf 反向代理到后端
+```
+
+### Nginx 配置示例
+
+```nginx
+server {
+    listen 8083;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # 前端路由支持
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # API 反向代理 (修改为你的后端地址)
+    location /api/ {
+        proxy_pass http://backend:8089/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### 环境变量
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| VITE_API_BASE_URL | 后端 API 地址 | /api |
+| VITE_UPLOAD_CHUNK_SIZE | 分片大小 | 5242880 (5MB) |
+| VITE_MAX_RETRIES | 最大重试次数 | 3 |
+
+### 常见问题
+
+**1. 前端无法访问后端 API**
+- 检查 Nginx 反向代理配置
+- 确认后端服务正在运行
+
+**2. 文件上传失败**
+- 检查后端 Redis 连接
+- 确认文件存储目录权限
+
+**3. CORS 错误**
+- 后端已配置 CORS，如有特殊需求请修改后端配置
